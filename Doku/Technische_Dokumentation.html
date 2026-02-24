@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IFAS-Assistent — Technische Dokumentation</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg2: #1e293b;
+      --bg3: #334155;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --accent: #3b82f6;
+      --accent2: #6366f1;
+      --accent3: #8b5cf6;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --cyan: #06b6d4;
+      --border: #334155;
+      --card: #1e293b;
+      --gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Header */
+    .hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 50%, #1a1040 100%);
+      padding: 4rem 0 3rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: .5rem;
+    }
+
+    .hero .subtitle {
+      color: var(--text2);
+      font-size: 1.2rem;
+    }
+
+    .hero .meta {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .hero .meta-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      color: var(--text3);
+      font-size: .9rem;
+    }
+
+    .hero .meta-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Navigation */
+    nav.toc {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    nav.toc .container {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    nav.toc a {
+      color: var(--text2);
+      text-decoration: none;
+      padding: .4rem .8rem;
+      border-radius: 6px;
+      font-size: .85rem;
+      transition: all .2s;
+    }
+
+    nav.toc a:hover,
+    nav.toc a.active {
+      background: var(--bg3);
+      color: var(--accent);
+    }
+
+    /* Sections */
+    section {
+      padding: 3rem 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    section h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    section h2 .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    section h3 {
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin: 1.5rem 0 .75rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section h4 {
+      font-size: 1rem;
+      color: var(--text2);
+      margin: 1rem 0 .5rem;
+    }
+
+    p,
+    li {
+      color: var(--text2);
+    }
+
+    ul,
+    ol {
+      padding-left: 1.5rem;
+      margin: .5rem 0;
+    }
+
+    li {
+      margin: .3rem 0;
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all .3s;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .card .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: .5rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .card .card-desc {
+      font-size: .9rem;
+      color: var(--text2);
+    }
+
+    .card .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: .9rem;
+    }
+
+    th {
+      background: var(--bg3);
+      color: var(--text);
+      padding: .75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: .65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    tr:hover td {
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    /* Code */
+    code {
+      background: var(--bg3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: .85rem;
+      color: var(--cyan);
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+    }
+
+    /* Badges */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+
+    .status-green {
+      background: rgba(16, 185, 129, .15);
+      color: var(--green);
+    }
+
+    .status-blue {
+      background: rgba(59, 130, 246, .15);
+      color: var(--accent);
+    }
+
+    .status-yellow {
+      background: rgba(245, 158, 11, .15);
+      color: var(--yellow);
+    }
+
+    .status-red {
+      background: rgba(239, 68, 68, .15);
+      color: var(--red);
+    }
+
+    .status-purple {
+      background: rgba(139, 92, 246, .15);
+      color: var(--accent3);
+    }
+
+    /* Diagram */
+    .diagram-container {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+    }
+
+    .diagram-container svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* File tree */
+    .file-tree {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: .85rem;
+      line-height: 1.8;
+    }
+
+    .file-tree .dir {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .file-tree .file {
+      color: var(--text2);
+    }
+
+    .file-tree .comment {
+      color: var(--text3);
+      font-style: italic;
+    }
+
+    .file-tree .del {
+      color: var(--red);
+      text-decoration: line-through;
+      opacity: .7;
+    }
+
+    /* Architecture diagram */
+    .arch-box {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: .85rem;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .arch-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+      align-items: center;
+    }
+
+    .arch-arrow {
+      color: var(--text3);
+      font-size: 1.5rem;
+    }
+
+    /* Expandable Cards & Modal */
+    .card.expandable {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .card.expandable .card-title::after {
+      content: '↗';
+      margin-left: auto;
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.2);
+      transition: all .3s;
+      font-weight: 300;
+    }
+
+    .card.expandable:hover .card-title::after {
+      color: var(--accent);
+      transform: translate(3px, -3px);
+    }
+
+    .card-detail {
+      display: none;
+    }
+
+    /* Modal Popup overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Modal Content Box */
+    .modal-content {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 850px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 0 2rem 2rem 2rem;
+      position: relative;
+      transform: translateY(20px) scale(0.98);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: translateY(0) scale(1);
+    }
+
+    /* Modal Header & Close Button */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+      padding: 1.5rem 0 1rem 0;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal-title::after {
+      content: none !important;
+    }
+
+    .modal-close {
+      background: var(--bg3);
+      border: none;
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal-close:hover {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .modal-close svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* In-Modal detailed styling */
+    .modal-body h4 {
+      color: var(--cyan);
+      font-size: 1.1rem;
+      margin: 1.5rem 0 .5rem;
+    }
+
+    .modal-body table {
+      font-size: .9rem;
+      margin: 1rem 0;
+    }
+
+    .modal-body pre {
+      font-size: .85rem;
+      margin: 1rem 0;
+      padding: 1rem 1.5rem;
+      background: var(--card);
+    }
+
+    .modal-body .hint {
+      background: rgba(245, 158, 11, .1);
+      border-left: 3px solid var(--yellow);
+      padding: .75rem 1rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1rem 0;
+      font-size: .95rem;
+      color: var(--text2);
+    }
+
+    .modal-body .hint strong {
+      color: var(--yellow);
+    }
+
+    /* Responsive */
+    @media (max-width:768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 0 1rem;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #1a1a1a;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+      }
+
+      nav.toc {
+        position: static;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="container">
+      <h1>IFAS-Assistent</h1>
+      <p class="subtitle">Technische Dokumentation — Intelligente Posteingangsverarbeitung</p>
+      <div class="meta">
+        <div class="meta-item"><span class="dot" style="background:var(--green)"></span> Version 2.0</div>
+        <div class="meta-item"><span class="dot" style="background:var(--accent)"></span> Python / Flask</div>
+        <div class="meta-item"><span class="dot" style="background:var(--accent3)"></span> Stand: Februar 2026</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="toc">
+    <div class="container">
+      <a href="#overview">Übersicht</a>
+      <a href="#architecture">Architektur</a>
+      <a href="#models">Datenmodell</a>
+      <a href="#services">Services</a>
+      <a href="#api">API-Endpunkte</a>
+      <a href="#frontend">Frontend</a>
+      <a href="#config">Konfiguration</a>
+      <a href="#deployment">Deployment</a>
+      <a href="Flowchart_Posteingang.html">📊 Flowchart</a>
+
+    </div>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- 1. ÜBERSICHT -->
+  <!-- ============================================================ -->
+  <section id="overview">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(59,130,246,.15); color:var(--accent)">📋</span> Systemübersicht</h2>
+
+      <p>Der <strong>IFAS-Assistent</strong> ist eine webbasierte Anwendung zur automatisierten Verarbeitung von
+        Posteingängen
+        für das IFAS-System (Informationssystem für Arbeitsschutz). Das System überwacht verschiedene Eingangsquellen
+        (E-Mail-Postfächer, lokale Ordner, Netzwerkfreigaben), extrahiert automatisch Dokumente und deren Inhalte,
+        analysiert diese mittels eines lokalen KI-Modells (LMStudio) und ermöglicht die validierte Übertragung in
+        das IFAS-Fachverfahren.</p>
+
+      <h3>Kernfunktionen</h3>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">📨 Multi-Source Posteingang</div>
+          <div class="card-desc">Automatische Überwachung und Import von Dokumenten aus IMAP-Postfächern, lokalen
+            Ordnern und Netzlaufwerken. Duplikat-Erkennung über Content-Hashing.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🤖 KI-gestützte Analyse</div>
+          <div class="card-desc">Dokumentklassifikation und Datenextraktion mittels LMStudio (lokales LLM).
+            Keyword-basierter Fallback bei LLM-Ausfall. Konfidenz-Scoring pro Feld.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ Validierung &amp; Korrektur</div>
+          <div class="card-desc">Side-by-Side-Ansicht: Originaldokument neben extrahierten Daten. Manuelle Korrektur
+            einzelner Felder, Kategorie-Änderung und Betriebsstätten-Zuordnung.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📤 IFAS-Übertragung</div>
+          <div class="card-desc">Direkte Übertragung der validierten Daten in das IFAS-Fachverfahren über die IFAS-API.
+            Erstellung von Anzeigen (Vorgängen) mit Dokumenten-Anhängen.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">👥 Benutzerverwaltung</div>
+          <div class="card-desc">Rollenbasierte Zugriffskontrolle (Admin / Sachbearbeiter). Login-Tracking, Audit-Log,
+            E-Mail-Benachrichtigungen bei Systemereignissen.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚙️ Konfigurierbare Kategorien</div>
+          <div class="card-desc">Frei definierbare Dokumentkategorien mit eigenen Feldern, Keywords und IFAS-Mappings.
+            Felder sind typisiert (Text, Datum, Auswahl, etc.).</div>
+        </div>
+      </div>
+
+      <h3>Technologie-Stack</h3>
+      <table>
+        <tr>
+          <th>Komponente</th>
+          <th>Technologie</th>
+          <th>Zweck</th>
+        </tr>
+        <tr>
+          <td>Backend</td>
+          <td><code>Python 3.x</code> / <code>Flask 2.x</code></td>
+          <td>Web-Framework, REST-API, Template-Rendering</td>
+        </tr>
+        <tr>
+          <td>Datenbank</td>
+          <td><code>SQLite</code> / <code>SQLAlchemy</code></td>
+          <td>Persistenz aller Daten (Dokumente, Benutzer, Konfiguration)</td>
+        </tr>
+        <tr>
+          <td>KI-Engine</td>
+          <td><code>LMStudio</code> (lokales LLM)</td>
+          <td>Dokumentenklassifikation &amp; Datenextraktion</td>
+        </tr>
+        <tr>
+          <td>OCR</td>
+          <td><code>Tesseract</code> / <code>PyMuPDF</code></td>
+          <td>Texterkennung in gescannten PDFs</td>
+        </tr>
+        <tr>
+          <td>PDF-Verarbeitung</td>
+          <td><code>PyMuPDF (fitz)</code></td>
+          <td>Text-, Metadaten- und Formularfeld-Extraktion</td>
+        </tr>
+        <tr>
+          <td>E-Mail</td>
+          <td><code>imaplib</code> / <code>smtplib</code></td>
+          <td>IMAP-Postfach-Überwachung &amp; Benachrichtigungen</td>
+        </tr>
+        <tr>
+          <td>Scheduler</td>
+          <td><code>Flask-APScheduler</code></td>
+          <td>Hintergrund-Jobs: Polling, Auto-Analyse</td>
+        </tr>
+        <tr>
+          <td>Auth</td>
+          <td><code>Flask-Login</code></td>
+          <td>Session-Management, Login-System</td>
+        </tr>
+        <tr>
+          <td>Frontend</td>
+          <td><code>Jinja2</code> / <code>HTML/CSS/JS</code></td>
+          <td>Server-Side Rendering mit eingebettetem JavaScript</td>
+        </tr>
+        <tr>
+          <td>System Tray</td>
+          <td><code>pystray</code></td>
+          <td>Windows-Tray-Icon zum Starten/Stoppen</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. ARCHITEKTUR -->
+  <!-- ============================================================ -->
+  <section id="architecture">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(99,102,241,.15); color:var(--accent2)">🏗️</span> Systemarchitektur
+      </h2>
+
+      <h3>Verzeichnisstruktur</h3>
+      <div class="file-tree">
+        <span class="dir">IFAS-Assistent/</span><br>
+        ├── <span class="file">run.py</span> <span class="comment">— Haupt-Einstiegspunkt (startet Flask-Server auf Port
+          5050)</span><br>
+        ├── <span class="file">launcher.py</span> <span class="comment">— Windows System-Tray Launcher (startet run.py
+          als Subprocess)</span><br>
+        ├── <span class="file">requirements.txt</span> <span class="comment">— Python-Abhängigkeiten</span><br>
+        ├── <span class="dir">app/</span> <span class="comment">— Flask Application Package</span><br>
+        │ ├── <span class="file">__init__.py</span> <span class="comment">— Application Factory (create_app),
+          DB-Seeding, Schema-Migration</span><br>
+        │ ├── <span class="file">config.py</span> <span class="comment">— Umgebungskonfiguration
+          (Dev/Prod/Test)</span><br>
+        │ ├── <span class="file">models.py</span> <span class="comment">— 8 SQLAlchemy-Modelle (User, Document,
+          Category, ...)</span><br>
+        │ ├── <span class="file">scheduler.py</span> <span class="comment">— APScheduler: Polling-Jobs &amp;
+          Hintergrund-Analyse</span><br>
+        │ ├── <span class="dir">auth/</span> <span class="comment">— Authentifizierung (Login/Logout)</span><br>
+        │ ├── <span class="dir">admin/</span> <span class="comment">— Admin-Bereich (Benutzer, Kategorien, Quellen,
+          Einstellungen)</span><br>
+        │ ├── <span class="dir">main/</span> <span class="comment">— Hauptansichten (Dashboard, Validierung)</span><br>
+        │ ├── <span class="dir">api/</span> <span class="comment">— REST-API (36+ Endpunkte)</span><br>
+        │ ├── <span class="dir">services/</span> <span class="comment">— Geschäftslogik-Module</span><br>
+        │ │ ├── <span class="file">email_connector.py</span> <span class="comment">— IMAP-Postfach-Anbindung</span><br>
+        │ │ ├── <span class="file">folder_monitor.py</span> <span class="comment">— Ordnerüberwachung
+          (lokal/Netzwerk)</span><br>
+        │ │ ├── <span class="file">document_extractor.py</span> <span class="comment">—
+          Multi-Format-Textextraktion</span><br>
+        │ │ ├── <span class="file">pdf_extractor.py</span> <span class="comment">— PDF-spezifische Extraktion &amp;
+          OCR</span><br>
+        │ │ ├── <span class="file">lmstudio_service.py</span> <span class="comment">— LLM-Kommunikation &amp;
+          Prompt-Engineering</span><br>
+        │ │ ├── <span class="file">ifas_api_client.py</span> <span class="comment">— IFAS-API Integration (Mock &amp;
+          Prod)</span><br>
+        │ │ └── <span class="file">email_service.py</span> <span class="comment">— SMTP-Benachrichtigungen</span><br>
+        │ ├── <span class="dir">templates/</span> <span class="comment">— Jinja2-Templates</span><br>
+        │ │ ├── <span class="file">base.html</span> <span class="comment">— Basis-Layout mit Sidebar</span><br>
+        │ │ ├── <span class="dir">auth/</span> <span class="comment">— login.html</span><br>
+        │ │ ├── <span class="dir">main/</span> <span class="comment">— dashboard.html, validation.html</span><br>
+        │ │ └── <span class="dir">admin/</span> <span class="comment">— 10 Admin-Templates</span><br>
+        │ └── <span class="dir">static/</span> <span class="comment">— Statische Assets (Logo)</span><br>
+        ├── <span class="dir">instance/</span> <span class="comment">— SQLite-Datenbank &amp; Debug-Logs</span><br>
+        ├── <span class="dir">uploads/</span> <span class="comment">— Gespeicherte Dokumente
+          (Arbeitsverzeichnis)</span><br>
+        ├── <span class="dir">processed/</span> <span class="comment">— Verarbeitete Original-Dateien</span><br>
+        └── <span class="dir">venv/</span> <span class="comment">— Python Virtual Environment</span>
+      </div>
+
+      <h3>Schichtenarchitektur</h3>
+      <div class="diagram-container">
+        <div class="arch-row">
+          <div class="arch-box"
+            style="background:rgba(59,130,246,.2); color:var(--accent); border:1px solid var(--accent)">🌐 Browser
+            (Client)</div>
+        </div>
+        <div class="arch-row"><span class="arch-arrow">⬇⬆</span></div>
+        <div class="arch-row">
+          <div class="arch-box"
+            style="background:rgba(99,102,241,.2); color:var(--accent2); border:1px solid var(--accent2)">Flask
+            Routes<br><small>auth / main / admin / api</small></div>
+        </div>
+        <div class="arch-row"><span class="arch-arrow">⬇⬆</span></div>
+        <div class="arch-row">
+          <div class="arch-box"
+            style="background:rgba(139,92,246,.2); color:var(--accent3); border:1px solid var(--accent3)">Service
+            Layer<br><small>7 Service-Module</small></div>
+          <div class="arch-box"
+            style="background:rgba(245,158,11,.2); color:var(--yellow); border:1px solid var(--yellow)">
+            Scheduler<br><small>APScheduler Jobs</small></div>
+        </div>
+        <div class="arch-row"><span class="arch-arrow">⬇⬆</span></div>
+        <div class="arch-row">
+          <div class="arch-box"
+            style="background:rgba(16,185,129,.2); color:var(--green); border:1px solid var(--green)">SQLAlchemy
+            ORM<br><small>8 Modelle</small></div>
+          <div class="arch-box" style="background:rgba(6,182,212,.2); color:var(--cyan); border:1px solid var(--cyan)">
+            LMStudio API<br><small>Lokales LLM</small></div>
+          <div class="arch-box" style="background:rgba(239,68,68,.2); color:var(--red); border:1px solid var(--red)">
+            IFAS API<br><small>Fachverfahren</small></div>
+        </div>
+        <div class="arch-row"><span class="arch-arrow">⬇⬆</span></div>
+        <div class="arch-row">
+          <div class="arch-box"
+            style="background:rgba(51,65,85,.5); color:var(--text2); border:1px solid var(--border)">SQLite DB</div>
+          <div class="arch-box"
+            style="background:rgba(51,65,85,.5); color:var(--text2); border:1px solid var(--border)">Dateisystem</div>
+          <div class="arch-box"
+            style="background:rgba(51,65,85,.5); color:var(--text2); border:1px solid var(--border)">IMAP Server</div>
+        </div>
+      </div>
+
+      <h3>Blueprint-Struktur</h3>
+      <table>
+        <tr>
+          <th>Blueprint</th>
+          <th>URL-Prefix</th>
+          <th>Aufgabe</th>
+          <th>Datei</th>
+        </tr>
+        <tr>
+          <td><code>auth</code></td>
+          <td><code>/</code></td>
+          <td>Login &amp; Logout mit Audit-Logging</td>
+          <td>app/auth/routes.py</td>
+        </tr>
+        <tr>
+          <td><code>main</code></td>
+          <td><code>/</code></td>
+          <td>Dashboard, Validierung, Dokumenten-Vorschau</td>
+          <td>app/main/routes.py</td>
+        </tr>
+        <tr>
+          <td><code>admin</code></td>
+          <td><code>/admin</code></td>
+          <td>Benutzer/Kategorien/Quellen/Einstellungen</td>
+          <td>app/admin/routes.py</td>
+        </tr>
+        <tr>
+          <td><code>api</code></td>
+          <td><code>/api</code></td>
+          <td>RESTful JSON-Endpoints (36+ Routen)</td>
+          <td>app/api/routes.py</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. DATENMODELL -->
+  <!-- ============================================================ -->
+  <section id="models">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(16,185,129,.15); color:var(--green)">🗄️</span> Datenmodell</h2>
+
+      <p>Die Datenbank verwendet <strong>SQLite</strong> über <code>SQLAlchemy ORM</code>. Alle 8 Modelle sind in
+        <code>app/models.py</code> definiert.
+      </p>
+
+      <h3>User</h3>
+      <p>Benutzermodell mit rollenbasierter Zugriffskontrolle.</p>
+      <table>
+        <tr>
+          <th>Feld</th>
+          <th>Typ</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><code>id</code></td>
+          <td>Integer (PK)</td>
+          <td>Primärschlüssel</td>
+        </tr>
+        <tr>
+          <td><code>username</code></td>
+          <td>String(64)</td>
+          <td>Eindeutiger Benutzername</td>
+        </tr>
+        <tr>
+          <td><code>email</code></td>
+          <td>String(120)</td>
+          <td>E-Mail-Adresse</td>
+        </tr>
+        <tr>
+          <td><code>password_hash</code></td>
+          <td>String(256)</td>
+          <td>Gehashtes Passwort (Werkzeug)</td>
+        </tr>
+        <tr>
+          <td><code>role</code></td>
+          <td>String(20)</td>
+          <td><code>admin</code> oder <code>user</code></td>
+        </tr>
+        <tr>
+          <td><code>display_name</code></td>
+          <td>String(100)</td>
+          <td>Anzeigename</td>
+        </tr>
+        <tr>
+          <td><code>is_active</code></td>
+          <td>Boolean</td>
+          <td>Konto aktiv/deaktiviert</td>
+        </tr>
+        <tr>
+          <td><code>notification_preferences</code></td>
+          <td>Text (JSON)</td>
+          <td>E-Mail-Benachrichtigungseinstellungen</td>
+        </tr>
+      </table>
+
+      <h3>Category</h3>
+      <p>Dokumentkategorien definieren die Klassifikation (z.B. Mutterschutz, Unfallanzeige, Pyrotechnische Anzeige).
+      </p>
+      <table>
+        <tr>
+          <th>Feld</th>
+          <th>Typ</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><code>name</code></td>
+          <td>String(100)</td>
+          <td>Interner Name der Kategorie</td>
+        </tr>
+        <tr>
+          <td><code>display_name</code></td>
+          <td>String(150)</td>
+          <td>Anzeigename</td>
+        </tr>
+        <tr>
+          <td><code>icon</code> / <code>color</code></td>
+          <td>String</td>
+          <td>Emoji-Icon und Hex-Farbe</td>
+        </tr>
+        <tr>
+          <td><code>ifas_art</code></td>
+          <td>String(100)</td>
+          <td>IFAS Vorgangsart für API-Mapping</td>
+        </tr>
+        <tr>
+          <td><code>ifas_zusatzart</code></td>
+          <td>String(100)</td>
+          <td>IFAS Zusatzart (optional)</td>
+        </tr>
+        <tr>
+          <td><code>keywords</code></td>
+          <td>Text</td>
+          <td>Komma-getrennte Keywords für KI-Matching</td>
+        </tr>
+        <tr>
+          <td><code>fields</code></td>
+          <td>Relationship</td>
+          <td>→ CategoryField (1:n, cascade delete)</td>
+        </tr>
+      </table>
+
+      <h3>CategoryField</h3>
+      <p>Dynamische Formularfelder pro Kategorie. Jedes Feld hat Typ, Validierung und KI-Steuerung.</p>
+      <table>
+        <tr>
+          <th>Feld</th>
+          <th>Typ</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><code>label</code></td>
+          <td>String(100)</td>
+          <td>Anzeigebeschriftung</td>
+        </tr>
+        <tr>
+          <td><code>key</code></td>
+          <td>String(50)</td>
+          <td>Interner Schlüssel für Daten-Mapping</td>
+        </tr>
+        <tr>
+          <td><code>content_id_ifas</code></td>
+          <td>String(100)</td>
+          <td>IFAS Content-ID für Sonderaktion-API</td>
+        </tr>
+        <tr>
+          <td><code>field_type</code></td>
+          <td>String(20)</td>
+          <td><code>text</code>, <code>number</code>, <code>date</code>, <code>select</code>, <code>textarea</code></td>
+        </tr>
+        <tr>
+          <td><code>options</code></td>
+          <td>Text (JSON)</td>
+          <td>Auswahloptionen (bei Typ <code>select</code>)</td>
+        </tr>
+        <tr>
+          <td><code>auto_fill</code></td>
+          <td>Boolean</td>
+          <td>KI darf dieses Feld automatisch befüllen</td>
+        </tr>
+        <tr>
+          <td><code>show_in_validation</code></td>
+          <td>Boolean</td>
+          <td>In der Validierungsansicht sichtbar</td>
+        </tr>
+        <tr>
+          <td><code>position</code></td>
+          <td>Integer</td>
+          <td>Sortierposition im Formular</td>
+        </tr>
+      </table>
+
+      <h3>InputSource</h3>
+      <p>Konfiguration der Eingangsquellen mit typenspezifischen JSON-Einstellungen.</p>
+      <table>
+        <tr>
+          <th>Feld</th>
+          <th>Typ</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><code>source_type</code></td>
+          <td>String(20)</td>
+          <td><code>imap</code>, <code>folder</code>, <code>network</code>, <code>ifas_api</code></td>
+        </tr>
+        <tr>
+          <td><code>config_json</code></td>
+          <td>Text</td>
+          <td>Typenspezifische Konfiguration als JSON</td>
+        </tr>
+        <tr>
+          <td><code>is_active</code></td>
+          <td>Boolean</td>
+          <td>Polling aktiv/inaktiv</td>
+        </tr>
+        <tr>
+          <td><code>auto_analyze</code></td>
+          <td>Boolean</td>
+          <td>Automatische KI-Analyse nach Import</td>
+        </tr>
+        <tr>
+          <td><code>poll_interval</code></td>
+          <td>Integer</td>
+          <td>Polling-Intervall in Sekunden</td>
+        </tr>
+        <tr>
+          <td><code>trash_folder</code></td>
+          <td>String(100)</td>
+          <td>Zielordner für gelöschte E-Mails</td>
+        </tr>
+        <tr>
+          <td><code>processed_folder</code></td>
+          <td>String(100)</td>
+          <td>Zielordner nach IFAS-Übertragung</td>
+        </tr>
+      </table>
+
+      <h3>Document</h3>
+      <p>Zentrale Entität — jedes importierte Dokument durchläuft den Status-Lifecycle:</p>
+      <p><span class="status status-yellow">pending</span> → <span class="status status-blue">analyzing</span> → <span
+          class="status status-green">ready</span> → <span class="status status-purple">transferred</span> oder <span
+          class="status status-red">rejected</span></p>
+      <table>
+        <tr>
+          <th>Feld</th>
+          <th>Typ</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><code>external_id</code></td>
+          <td>String(100)</td>
+          <td>UUID für Dateizuordnung</td>
+        </tr>
+        <tr>
+          <td><code>filename</code></td>
+          <td>String(255)</td>
+          <td>Originaler Dateiname</td>
+        </tr>
+        <tr>
+          <td><code>stored_path</code></td>
+          <td>String(500)</td>
+          <td>Pfad zur gespeicherten Datei</td>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td>String(20)</td>
+          <td>Verarbeitungsstatus (s. Lifecycle)</td>
+        </tr>
+        <tr>
+          <td><code>raw_text</code></td>
+          <td>Text</td>
+          <td>Extrahierter Volltext</td>
+        </tr>
+        <tr>
+          <td><code>category_id</code></td>
+          <td>FK → Category</td>
+          <td>Von KI erkannte Kategorie</td>
+        </tr>
+        <tr>
+          <td><code>ai_confidence</code></td>
+          <td>Float</td>
+          <td>KI-Konfidenz (0.0 – 1.0)</td>
+        </tr>
+        <tr>
+          <td><code>extracted_data_json</code></td>
+          <td>Text (JSON)</td>
+          <td>Extrahierte Felddaten</td>
+        </tr>
+        <tr>
+          <td><code>content_hash</code></td>
+          <td>String(64)</td>
+          <td>SHA256-Hash zur Duplikat-Erkennung</td>
+        </tr>
+        <tr>
+          <td><code>imap_uid</code></td>
+          <td>Integer</td>
+          <td>IMAP-UID für E-Mail-Operationen</td>
+        </tr>
+        <tr>
+          <td><code>ifas_aktenzeichen</code></td>
+          <td>String(100)</td>
+          <td>IFAS-Aktenzeichen nach Übertragung</td>
+        </tr>
+        <tr>
+          <td><code>analysis_started_at</code></td>
+          <td>DateTime</td>
+          <td>Beginn KI-Analyse (Performance-Tracking)</td>
+        </tr>
+      </table>
+
+      <h3>Attachment</h3>
+      <p>E-Mail-Anhänge oder eingebettete Dateien eines Dokuments.</p>
+
+      <h3>AuditLog</h3>
+      <p>Protokollierung aller relevanten Benutzeraktionen (Login, Übertragung, Ablehnung, Konfigurationsänderungen).
+      </p>
+
+      <h3>AppConfig</h3>
+      <p>Key-Value-Store für Anwendungsweite Einstellungen (LLM-URL, OCR-Pfad, SMTP-Konfiguration etc.).</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. SERVICES -->
+  <!-- ============================================================ -->
+  <section id="services">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(245,158,11,.15); color:var(--yellow)">⚡</span> Service-Schicht</h2>
+
+      <p>Die gesamte Geschäftslogik ist in 7 eigenständige Service-Module aufgeteilt:</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">📧 EmailConnector <span class="badge"
+              style="background:rgba(59,130,246,.2); color:var(--accent)">email_connector.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> IMAP-Postfach-Anbindung und E-Mail-Import.<br>
+            <strong>Methoden:</strong>
+            <ul>
+              <li><code>poll()</code> — Neue E-Mails per IMAP-UID abrufen</li>
+              <li><code>_import_email(msg, uid)</code> — E-Mail in System importieren</li>
+              <li><code>move_to_folder(doc, folder)</code> — E-Mail verschieben (IMAP COPY + DELETE)</li>
+              <li><code>test_connection()</code> — Verbindungstest mit Statistiken</li>
+              <li><code>get_folders()</code> — Verfügbare IMAP-Ordner auflisten</li>
+            </ul>
+            <strong>Duplikat-Erkennung:</strong> SHA256-Hash des E-Mail-Inhalts wird mit bestehenden verglichen.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📁 FolderMonitor <span class="badge"
+              style="background:rgba(16,185,129,.2); color:var(--green)">folder_monitor.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> Überwachung lokaler und Netzwerk-Ordner.<br>
+            <strong>Methoden:</strong>
+            <ul>
+              <li><code>poll()</code> — Ordner auf neue Dateien scannen</li>
+              <li><code>_import_document(path, name)</code> — Datei importieren &amp; kopieren</li>
+              <li><code>move_to_processed/rejected/trash(doc)</code> — Datei verschieben</li>
+            </ul>
+            <strong>Unterstützte Formate:</strong> PDF, DOCX, DOC, ODT, MSG, EML<br>
+            <strong>Features:</strong> Datei-Hash-Prüfung, MSG/EML-Parsing mit Attachment-Extraktion.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📄 DocumentExtractor <span class="badge"
+              style="background:rgba(6,182,212,.2); color:var(--cyan)">document_extractor.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> Unified Text-Extraktion aus verschiedenen Formaten.<br>
+            <strong>Formate:</strong> PDF (PyMuPDF + OCR), DOCX (python-docx), ODT (odfpy), MSG (extract-msg), EML
+            (email-Modul).<br>
+            <strong>Features:</strong> Automatische Tesseract-Erkennung unter Windows, Fallback-Strategien.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔬 PDFExtractor <span class="badge"
+              style="background:rgba(139,92,246,.2); color:var(--accent3)">pdf_extractor.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> Spezialisierte PDF-Verarbeitung.<br>
+            <strong>Strategien:</strong>
+            <ul>
+              <li><code>standard</code> — Textlayer-Extraktion inkl. Formularfelder (Widgets)</li>
+              <li><code>tesseract</code> — OCR mit 2x-Zoom für bessere Qualität</li>
+            </ul>
+            <strong>Extras:</strong> Tabellenextraktion via pdfplumber, seitenweise Extraktion.
+          </div>
+        </div>
+
+        <div class="card expandable">
+          <div class="card-title">🤖 LMStudioService <span class="badge"
+              style="background:rgba(239,68,68,.2); color:var(--red)">lmstudio_service.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> KI-gestützte Dokumentenanalyse via LMStudio.<br>
+            <strong>Methoden:</strong>
+            <ul>
+              <li><code>analyze_document(text, attachments, categories)</code> — Hauptanalyse</li>
+              <li><code>_build_analysis_prompt()</code> — Dynamischer Prompt aus Kategorien/Feldern</li>
+              <li><code>_parse_response()</code> — JSON-Parsing mit aggressivem Fallback</li>
+              <li><code>check_connection()</code> — LMStudio-Erreichbarkeit prüfen</li>
+              <li><code>reload_model()</code> — Modell bei Absturz neu laden</li>
+            </ul>
+            <strong>Fallback:</strong> Keyword-basierte Analyse wenn LLM nicht erreichbar.
+          </div>
+          <div class="card-detail">
+            <div class="hint"><strong>⚠️ API-Endpunkte (LMStudio):</strong><br>
+              <code>GET /api/v1/models</code> — Modelle auflisten<br>
+              <code>POST /api/v1/chat</code> — Chat-Completions<br>
+              <code>POST /api/v1/models/load</code> — Modell laden
+            </div>
+            <h4>Analyse-Prompt</h4>
+            <p>Der Prompt wird dynamisch aus Kategorien und Feldern zusammengebaut. Erkennt das LLM die Daten nicht,
+              wird eine Keyword-basierte Hybrid-Konfidenz zur Fallback-Validierung genutzt.</p>
+          </div>
+        </div>
+
+        <div class="card expandable">
+          <div class="card-title">🔗 IfasApiClient <span class="badge"
+              style="background:rgba(99,102,241,.2); color:var(--accent2)">ifas_api_client.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> IFAS-Fachverfahren Integration.<br>
+            <strong>Methoden:</strong>
+            <ul>
+              <li><code>search_betriebsstaette(query)</code> — Betriebsstätten suchen</li>
+              <li><code>create_betriebsstaette(data)</code> — Neue Betriebsstätte anlegen</li>
+              <li><code>create_anzeige(anzeige_data)</code> — Vorgang/Anzeige anlegen</li>
+              <li><code>attach_document(aktenzeichen, path)</code> — Dokument anhängen</li>
+              <li><code>create_post(post_data)</code> — Posteingang erstellen</li>
+              <li><code>get_arbeitskorb(status)</code> — Items aus dem IFAS Arbeitskorb lesen</li>
+              <li><code>update_post_status(post_id, status)</code> — Status eines Posteingangs ändern</li>
+            </ul>
+            <strong>Modi:</strong> Mock-Modus für Entwicklung, API-Modus für Produktion.
+          </div>
+          <div class="card-detail">
+            <div class="hint"><strong>⚠️ Hinweis:</strong> Die IFAS-API wird aktuell von der Firma
+              <strong>Kisters</strong> zu einer REST-API umgebaut. Die hier dokumentierten Endpunkte basieren auf dem
+              aktuellen Stand und werden sich erweitern.
+            </div>
+
+            <div class="hint"><strong>🚀 Zukünftige Endpunkte (Geplant):</strong><br>
+              In kommenden Versionen werden weitere Endpunkte ergänzt zur:<br>
+              - Abfrage von Posteingängen direkt aus dem IFAS Arbeitskorb<br>
+              - Weiterleitung eines Posteingangs (IFAS-seitig)<br>
+              - Verwaltung der Mitarbeiterzuständigkeit
+            </div>
+
+            <h4>1. search_betriebsstaette(query, ort, plz, limit)</h4>
+            <p>Sucht nach Betriebsstätten im IFAS-System.</p>
+            <table>
+              <tr>
+                <th>Parameter</th>
+                <th>Typ</th>
+                <th>Beschreibung</th>
+              </tr>
+              <tr>
+                <td><code>query</code></td>
+                <td>str</td>
+                <td>Suchbegriff (Name des Betriebs)</td>
+              </tr>
+              <tr>
+                <td><code>ort</code></td>
+                <td>str (opt)</td>
+                <td>Ort-Filter</td>
+              </tr>
+              <tr>
+                <td><code>limit</code></td>
+                <td>int</td>
+                <td>Max. Ergebnisse</td>
+              </tr>
+            </table>
+            <pre><code># API-Endpunkt (Produktion):
+# GET {IFAS_API_URL}/betriebsstaetten?q=Musterfirma&amp;limit=10
+# Header: Authorization: Bearer {API_KEY}</code></pre>
+
+            <h4>2. create_betriebsstaette(data)</h4>
+            <p>Legt eine neue Betriebsstätte in IFAS an.</p>
+            <table>
+              <tr>
+                <th>Parameter</th>
+                <th>Typ</th>
+                <th>Beschreibung</th>
+              </tr>
+              <tr>
+                <td><code>data</code></td>
+                <td>dict</td>
+                <td>Stammdaten (name, ort, plz, strasse, sachbearbeiter)</td>
+              </tr>
+            </table>
+            <pre><code># POST {IFAS_API_URL}/betriebe
+# Erwartet: {"success": true, "bs_nr": "BS-..."}</code></pre>
+
+            <h4>3. create_anzeige(anzeige_data)</h4>
+            <p>Erstellt einen neuen Vorgang (Anzeige) im IFAS-System.</p>
+            <table>
+              <tr>
+                <th>Feld</th>
+                <th>Typ</th>
+                <th>Beschreibung</th>
+              </tr>
+              <tr>
+                <td><code>art</code></td>
+                <td>str</td>
+                <td>IFAS Vorgangsart</td>
+              </tr>
+              <tr>
+                <td><code>bs_nr</code></td>
+                <td>str</td>
+                <td>Betriebsstättennummer</td>
+              </tr>
+              <tr>
+                <td><code>fields</code></td>
+                <td>dict</td>
+                <td>content_id → Wert</td>
+              </tr>
+            </table>
+            <pre><code># Payload-Struktur:
+payload = {
+    "art": "Mutterschutz",
+    "status": "Entwurf",
+    "bs_nr": "BS-12345",
+    "sonderaktion_values": {
+        "CONTENT_ID_001": "Max Mustermann"
+    }
+}
+# POST {IFAS_API_URL}/anzeigen</code></pre>
+            <div class="hint"><strong>💡 Hinweis:</strong> <code>sonderaktion_values</code> werden über
+              <code>CategoryField.content_id_ifas</code> gemappt.
+            </div>
+
+            <h4>4. attach_document(aktenzeichen, file_path)</h4>
+            <pre><code># POST {IFAS_API_URL}/anzeigen/{aktenzeichen}/dokumente
+# Body: multipart/form-data mit Datei</code></pre>
+
+            <h4>5. create_post(post_data)</h4>
+            <p>Erstellt einen reinen Posteingang im System (ApiPost).</p>
+            <pre><code># POST {IFAS_API_URL}/post
+# Body: JSON (z.B. betreff, eingangsdatum)</code></pre>
+
+            <h4>6. get_arbeitskorb(status='NEU')</h4>
+            <p>Liest ausstehende oder bearbeitete Elemente aus dem Arbeitskorb.</p>
+            <pre><code># GET {IFAS_API_URL}/arbeitskorb?status=NEU</code></pre>
+
+            <h4>7. update_post_status(post_id, status='DMS')</h4>
+            <p>Aktualisiert den Status eines verarbeiteten Posteingangs.</p>
+            <pre><code># PUT {IFAS_API_URL}/post/{post_id}/status</code></pre>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📬 EmailService <span class="badge"
+              style="background:rgba(51,65,85,.5); color:var(--text2)">email_service.py</span></div>
+          <div class="card-desc">
+            <strong>Aufgabe:</strong> SMTP-basierte Alert-Benachrichtigungen.<br>
+            <strong>Funktion:</strong> <code>send_alert_to_subscribers(subject, body, alert_type)</code><br>
+            <strong>Alert-Typen:</strong> <code>error</code> (Systemfehler), <code>pending_overflow</code> (zu viele
+            wartende Dokumente).<br>
+            Empfänger werden anhand der Benutzer-Präferenzen bestimmt. Fallback auf Admin-E-Mail.
+          </div>
+        </div>
+      </div>
+
+      <h3>Scheduler (scheduler.py)</h3>
+      <p>Der <strong>APScheduler</strong> steuert zwei Hintergrundaufgaben:</p>
+      <table>
+        <tr>
+          <th>Job</th>
+          <th>Intervall</th>
+          <th>Funktion</th>
+        </tr>
+        <tr>
+          <td>Source Polling</td>
+          <td>Konfig. pro Quelle (Standard: 60s)</td>
+          <td>Alle aktiven InputSources abfragen, neue Dokumente importieren. Bei <code>auto_analyze=True</code> wird
+            sofort die KI-Analyse gestartet.</td>
+        </tr>
+        <tr>
+          <td>Background Analysis</td>
+          <td>On-Demand</td>
+          <td>Alle Dokumente mit Status <code>pending</code> analysieren. Thread-Safe über <code>analysis_lock</code>.
+            Watchdog für "stuck" Dokumente (>5 Min in <code>analyzing</code>).</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 5. API -->
+  <!-- ============================================================ -->
+  <section id="api">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(6,182,212,.15); color:var(--cyan)">🔌</span> REST-API Endpunkte</h2>
+
+      <p>Alle Endpunkte erfordern Authentifizierung (<code>@login_required</code>). Basis-URL: <code>/api</code></p>
+
+      <h3>Dokumente</h3>
+      <table>
+        <tr>
+          <th>Methode</th>
+          <th>Pfad</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/documents</code></td>
+          <td>Liste aller Dokumente (Filter: status, source_id, category_id)</td>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/documents/&lt;id&gt;</code></td>
+          <td>Einzelnes Dokument mit Details</td>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/documents/&lt;id&gt;/file</code></td>
+          <td>Original-Datei herunterladen</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/documents/&lt;id&gt;/analyze</code></td>
+          <td>KI-Analyse für einzelnes Dokument starten</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/documents/analyze-all</code></td>
+          <td>Hintergrund-Analyse für alle Pending-Dokumente</td>
+        </tr>
+        <tr>
+          <td><span class="status status-yellow">PUT</span></td>
+          <td><code>/api/documents/&lt;id&gt;</code></td>
+          <td>Dokument-Daten aktualisieren (Validierungsformular)</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/documents/&lt;id&gt;/transfer</code></td>
+          <td>Dokument an IFAS übertragen</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/documents/&lt;id&gt;/reject</code></td>
+          <td>Dokument ablehnen/verwerfen</td>
+        </tr>
+        <tr>
+          <td><span class="status status-red">DELETE</span></td>
+          <td><code>/api/documents/&lt;id&gt;</code></td>
+          <td>Dokument permanent löschen</td>
+        </tr>
+      </table>
+
+      <h3>Kategorien</h3>
+      <table>
+        <tr>
+          <th>Methode</th>
+          <th>Pfad</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/categories</code></td>
+          <td>Alle aktiven Kategorien</td>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/categories/&lt;id&gt;/fields</code></td>
+          <td>Felder einer Kategorie</td>
+        </tr>
+      </table>
+
+      <h3>Betriebsstätten</h3>
+      <table>
+        <tr>
+          <th>Methode</th>
+          <th>Pfad</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/betriebe?q=...</code></td>
+          <td>Betriebsstätten suchen</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/betriebe</code></td>
+          <td>Neue Betriebsstätte anlegen</td>
+        </tr>
+      </table>
+
+      <h3>Input Sources</h3>
+      <table>
+        <tr>
+          <th>Methode</th>
+          <th>Pfad</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/sources</code></td>
+          <td>Alle Eingangsquellen</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/sources/&lt;id&gt;/toggle</code></td>
+          <td>Quelle aktivieren/deaktivieren</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/sources/&lt;id&gt;/poll</code></td>
+          <td>Manuelles Polling auslösen</td>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/sources/&lt;id&gt;/check</code></td>
+          <td>Verbindungstest</td>
+        </tr>
+      </table>
+
+      <h3>System</h3>
+      <table>
+        <tr>
+          <th>Methode</th>
+          <th>Pfad</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/stats</code></td>
+          <td>Dashboard-Statistiken (Counts, Accuracy, Timing)</td>
+        </tr>
+        <tr>
+          <td><span class="status status-green">GET</span></td>
+          <td><code>/api/llm/status</code></td>
+          <td>LMStudio-Verbindungsstatus</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/llm/load</code></td>
+          <td>LMStudio-Modell laden</td>
+        </tr>
+        <tr>
+          <td><span class="status status-blue">POST</span></td>
+          <td><code>/api/reset</code></td>
+          <td>System zurücksetzen</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 6. FRONTEND -->
+  <!-- ============================================================ -->
+  <section id="frontend">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(139,92,246,.15); color:var(--accent3)">🖥️</span> Frontend &amp;
+        Templates</h2>
+
+      <p>Das Frontend basiert auf <strong>Jinja2 Server-Side Rendering</strong> mit eingebettetem JavaScript für
+        dynamische Interaktionen.</p>
+
+      <h3>Hauptansichten</h3>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">📊 Dashboard <span class="badge"
+              style="background:rgba(59,130,246,.2); color:var(--accent)">dashboard.html</span></div>
+          <div class="card-desc">
+            Übersichtsseite mit: Dokumenten-Status-Statistiken, Eingangsquellen-Karten mit Live-Status,
+            Quick-Actions (Analyse starten, Polling auslösen), LLM-Verbindungsstatus,
+            KI-Genauigkeitsmetriken. <strong>Auto-Refresh alle 3 Sekunden via API-Polling.</strong>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ Validierung <span class="badge"
+              style="background:rgba(16,185,129,.2); color:var(--green)">validation.html</span></div>
+          <div class="card-desc">
+            Side-by-Side-Ansicht: Links Dokumentenliste mit Filteroptionen, Mitte PDF/Dokument-Vorschau,
+            Rechts extrahierte Daten als dynamisches Formular. Betriebsstätten-Suche mit Live-Suche.
+            Aktionen: Speichern, An IFAS übertragen, Ablehnen, Löschen.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔐 Login <span class="badge"
+              style="background:rgba(99,102,241,.2); color:var(--accent2)">login.html</span></div>
+          <div class="card-desc">Login-Formular mit Benutzername/Passwort und "Angemeldet bleiben"-Option.</div>
+        </div>
+      </div>
+
+      <h3>Admin-Bereich (10 Templates)</h3>
+      <table>
+        <tr>
+          <th>Template</th>
+          <th>Funktion</th>
+        </tr>
+        <tr>
+          <td><code>index.html</code></td>
+          <td>Admin-Dashboard mit Schnellübersicht</td>
+        </tr>
+        <tr>
+          <td><code>users.html</code> / <code>user_form.html</code></td>
+          <td>Benutzerverwaltung (CRUD)</td>
+        </tr>
+        <tr>
+          <td><code>categories.html</code> / <code>category_form.html</code></td>
+          <td>Kategorienverwaltung mit Feld-Editor</td>
+        </tr>
+        <tr>
+          <td><code>inputs.html</code> / <code>input_form.html</code></td>
+          <td>Eingangsquellen mit Verbindungstests</td>
+        </tr>
+        <tr>
+          <td><code>settings.html</code></td>
+          <td>Systemeinstellungen (LLM, OCR, SMTP, IFAS-API)</td>
+        </tr>
+        <tr>
+          <td><code>appearance.html</code></td>
+          <td>Theme-/Design-Einstellungen</td>
+        </tr>
+        <tr>
+          <td><code>betriebe_settings.html</code></td>
+          <td>Betriebsstätten-Import und -Verwaltung</td>
+        </tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 7. KONFIGURATION -->
+  <!-- ============================================================ -->
+  <section id="config">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(239,68,68,.15); color:var(--red)">⚙️</span> Konfiguration</h2>
+
+      <h3>Umgebungskonfiguration (config.py)</h3>
+      <table>
+        <tr>
+          <th>Variable</th>
+          <th>Standard</th>
+          <th>Beschreibung</th>
+        </tr>
+        <tr>
+          <td><code>LMSTUDIO_URL</code></td>
+          <td><code>http://localhost:1234/v1</code></td>
+          <td>LMStudio API-Endpunkt</td>
+        </tr>
+        <tr>
+          <td><code>IFAS_API_URL</code></td>
+          <td><code>http://localhost:5051/api/ifas</code></td>
+          <td>IFAS-API Basis-URL</td>
+        </tr>
+        <tr>
+          <td><code>IFAS_API_MOCK</code></td>
+          <td><code>true</code></td>
+          <td>Mock-Modus für Entwicklung</td>
+        </tr>
+        <tr>
+          <td><code>WATCH_FOLDER</code></td>
+          <td><code>C:/IFAS_Posteingang</code></td>
+          <td>Standard-Überwachungsordner</td>
+        </tr>
+        <tr>
+          <td><code>UPLOAD_FOLDER</code></td>
+          <td><code>./uploads</code></td>
+          <td>Speicherort für importierte Dateien</td>
+        </tr>
+        <tr>
+          <td><code>MAX_CONTENT_LENGTH</code></td>
+          <td><code>50 MB</code></td>
+          <td>Maximale Upload-Größe</td>
+        </tr>
+      </table>
+
+      <h3>Laufzeit-Konfiguration (AppConfig-Tabelle)</h3>
+      <p>Folgende Einstellungen werden in der Datenbank gespeichert und über die Admin-Oberfläche verwaltet:</p>
+      <ul>
+        <li><strong>LMStudio:</strong> URL, Modell-ID, Temperatur, Max-Tokens</li>
+        <li><strong>OCR:</strong> Strategie (standard/tesseract), Tesseract-Pfad, Sprache</li>
+        <li><strong>SMTP:</strong> Server, Port, Benutzer, Passwort, SSL, Absender</li>
+        <li><strong>IFAS-API:</strong> URL, API-Key, Mock-Modus</li>
+        <li><strong>UI:</strong> Anwendungsname, Theme-Einstellungen</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 8. DEPLOYMENT -->
+  <!-- ============================================================ -->
+  <section id="deployment">
+    <div class="container">
+      <h2><span class="icon" style="background:rgba(16,185,129,.15); color:var(--green)">🚀</span> Deployment &amp;
+        Betrieb</h2>
+
+      <h3>Voraussetzungen</h3>
+      <ul>
+        <li>Python 3.8+</li>
+        <li>Tesseract OCR (optional, für gescannte PDFs)</li>
+        <li>LMStudio (für KI-Analyse)</li>
+      </ul>
+
+      <h3>Installation</h3>
+      <pre><code># 1. Virtual Environment erstellen
+python -m venv venv
+venv\Scripts\activate
+
+# 2. Abhängigkeiten installieren
+pip install -r requirements.txt
+
+# 3. Server starten
+python run.py
+
+# Alternativ: Als Tray-Anwendung starten
+python launcher.py</code></pre>
+
+      <h3>Standard-Zugangsdaten</h3>
+      <table>
+        <tr>
+          <th>Rolle</th>
+          <th>Benutzername</th>
+          <th>Passwort</th>
+        </tr>
+        <tr>
+          <td>Administrator</td>
+          <td><code>admin</code></td>
+          <td><code>admin123</code></td>
+        </tr>
+        <tr>
+          <td>Sachbearbeiter</td>
+          <td><code>sachbearbeiter</code></td>
+          <td><code>user123</code></td>
+        </tr>
+      </table>
+
+      <h3>Ports</h3>
+      <table>
+        <tr>
+          <th>Service</th>
+          <th>Port</th>
+        </tr>
+        <tr>
+          <td>IFAS-Assistent (Flask)</td>
+          <td><code>5050</code></td>
+        </tr>
+        <tr>
+          <td>LMStudio API</td>
+          <td><code>1234</code></td>
+        </tr>
+      </table>
+
+      <h3>Automatischer Datenbankaufbau</h3>
+      <p>Beim ersten Start erstellt <code>create_app()</code> automatisch:</p>
+      <ul>
+        <li>Alle Datenbanktabellen</li>
+        <li>Admin-Benutzer mit Standard-Passwort</li>
+        <li>Standard-Kategorien (Mutterschutz, Unfallanzeige, Pyrotechnische Anzeige) mit Feldern</li>
+        <li>Standard-Eingangsquellen (Posteingang Lokal, E-Mail-Postfach)</li>
+        <li>Standard-AppConfig-Werte</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer
+    style="text-align:center; padding:2rem; color:var(--text3); font-size:.85rem; border-top:1px solid var(--border);">
+    IFAS-Assistent v2.0 — Technische Dokumentation — Erstellt am 24.02.2026
+  </footer>
+
+  <!-- Modal Container -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Details</div>
+        <button class="modal-close" id="modalClose">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+            </path>
+          </svg>
+          Schließen
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('detailModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    document.querySelectorAll('.card.expandable').forEach(card => {
+      card.addEventListener('click', e => {
+        if (e.target.closest('a, code, pre, button')) return;
+
+        // Copy title
+        const titleElement = card.querySelector('.card-title');
+        modalTitle.innerHTML = titleElement.innerHTML;
+
+        // Copy Details
+        const detailElement = card.querySelector('.card-detail');
+        if (detailElement) {
+          modalBody.innerHTML = detailElement.innerHTML;
+        } else {
+          modalBody.innerHTML = "<p>Keine weiteren Details verfügbar.</p>";
+        }
+
+        // Show Modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => {
+      if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeModal();
+      }
+    });
+  </script>
+
+</body>
+
+</html>

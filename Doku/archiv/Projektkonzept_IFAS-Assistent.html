@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFAS-Assistent: Projektdurchführungskonzept</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        .header-meta {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 0.9em;
+        }
+        .executive-summary {
+            background-color: #e8f0fe;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+        .executive-summary h2 {
+            color: #2980b9;
+            margin-top: 0;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .automated-workflow {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .workflow-steps {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .workflow-step {
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px;
+            flex: 1;
+            min-width: 200px;
+            max-width: 30%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .workflow-step strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        .workflow-step .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        .phase {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .phase h3 {
+            color: #3498db;
+            margin-top: 0;
+        }
+        .sub-section {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        .sub-section strong {
+            color: #555;
+        }
+        .architecture-layers {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .architecture-layer {
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px;
+            flex: 1;
+            min-width: 200px;
+            max-width: 30%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .architecture-layer strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        .architecture-layer .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        .gantt-container {
+            margin-top: 20px;
+            margin-bottom: 40px;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .gantt-header {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+        .gantt-header .title {
+            font-weight: bold;
+        }
+        .gantt-timeline {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            text-align: left;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .gantt-phase, .gantt-task {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .gantt-phase > div:first-child {
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        .gantt-task > div:first-child {
+            padding-left: 20px;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .gantt-chart {
+            position: relative;
+            height: 30px;
+        }
+        .gantt-bar {
+            position: absolute;
+            height: 20px;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gantt-bar-task {
+            position: absolute;
+            height: 12px;
+            border-radius: 3px;
+        }
+        
+        /* --- KORRIGIERTER BEREICH START --- */
+        .gantt-phase-1 { background-color: #5dade2; left: 0%; width: 6.25%; }
+        .gantt-task-1-1 { background-color: #a9cce3; left: 0%; width: 3.125%; }
+        .gantt-task-1-2 { background-color: #a9cce3; left: 3.125%; width: 3.125%; }
+        
+        .gantt-phase-2 { background-color: #58d68d; left: 6.25%; width: 15.625%; }
+        .gantt-task-2-1 { background-color: #abebc6; left: 6.25%; width: 9.375%; }
+        .gantt-task-2-2 { background-color: #abebc6; left: 15.625%; width: 6.25%; }
+        
+        .gantt-phase-3 { background-color: #f5b041; left: 21.875%; width: 21.875%; }
+        .gantt-task-3-1 { background-color: #fad7a0; left: 21.875%; width: 12.5%; }
+        .gantt-task-3-2 { background-color: #fad7a0; left: 34.375%; width: 9.375%; }
+        
+        .gantt-phase-4 { background-color: #af7ac5; left: 43.75%; width: 43.75%; }
+        .gantt-task-4-1 { background-color: #d7bde2; left: 43.75%; width: 37.5%; }
+        .gantt-task-4-2 { background-color: #d7bde2; left: 68.75%; width: 18.75%; }
+        
+        .gantt-phase-5 { background-color: #5d8de2; left: 87.5%; width: 12.5%; }
+        .gantt-task-5-1 { background-color: #a9bce3; left: 87.5%; width: 9.375%; }
+        .gantt-task-5-2 { background-color: #a9bce3; left: 96.875%; width: 3.125%; }
+        /* --- KORRIGIERTER BEREICH ENDE --- */
+
+        .business-case-visual {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .kpi-card-main {
+            grid-column: 1 / -1;
+            background-color: #2c7a7b;
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .kpi-card-main .kpi-value { font-size: 2.5em; font-weight: bold; }
+        .kpi-card-main .kpi-label { font-size: 1.2em; margin-top: 5px; }
+        .kpi-card-main .kpi-subtext { font-size: 0.9em; opacity: 0.8; margin-top: 10px; }
+        .kpi-card-secondary {
+            background-color: #ecf0f1;
+            color: #34495e;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .kpi-card-secondary .kpi-value { font-size: 2em; font-weight: bold; color: #2c7a7b; }
+        .kpi-card-secondary .kpi-label { font-size: 1em; margin-top: 5px; }
+        .savings-breakdown { grid-column: 1 / -1; margin-top: 10px; }
+        .savings-breakdown h4 { margin-top: 0; margin-bottom: 15px; text-align: center; color: #34495e; }
+        .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+        .bar-item { display: flex; align-items: center; gap: 10px; }
+        .bar-label { flex-basis: 250px; text-align: right; font-size: 0.9em; color: #555; }
+        .bar-wrapper { flex-grow: 1; background-color: #eaf1f1; border-radius: 4px; height: 22px; }
+        .bar {
+            height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end;
+            padding-right: 8px; font-size: 0.8em; font-weight: bold; color: white; box-sizing: border-box; white-space: nowrap;
+        }
+
+        .task-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+        .task-table th, .task-table td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .task-table thead th {
+            background-color: #f2f8fd;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .task-table tbody tr:hover { background-color: #fafdff; }
+        .task-table .phase-cell {
+            font-weight: bold; color: #3498db; background-color: #f9f9f9;
+            vertical-align: middle; text-align: center;
+        }
+        .task-table input[type="text"] {
+            width: 100%; padding: 8px; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box; background-color: #fff;
+        }
+        .task-table .col-volunteer { width: 20%; }
+        .task-table .col-deadline { width: 15%; }
+        .task-table .col-remark { width: 30%; }
+
+        .submit-button {
+            display: block; width: 200px; margin: 30px auto; padding: 12px 20px;
+            background-color: #3498db; color: white; border: none; border-radius: 5px;
+            font-size: 1em; font-weight: bold; cursor: pointer; text-align: center;
+        }
+        .submit-button:hover { background-color: #2980b9; }
+
+        #email-fallback {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #email-fallback textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+        }
+
+    </style>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- [Content bis Abschnitt 6 bleibt unverändert] -->
+        <h1>Projektdurchführungskonzept<br><span style="font-size: 0.8em; font-weight: normal;">IFAS-Assistent</span><br><span style="font-size: 0.6em; font-weight: normal; font-style: italic;">Effizienzsteigerung durch intelligente Prozessautomatisierung in der Fachanwendung IFAS</span></h1>
+        <div class="header-meta"><p><strong>Datum:</strong> 18. November 2025</p><p><strong>Abteilung:</strong> IT (Abt. 4, LASG)</p><p><strong>Version:</strong> 1.2 (Entwurf zur Genehmigung)</p></div>
+        <div class="executive-summary"><h2>Executive Summary</h2><p>Das Projekt "IFAS-Assistent" adressiert den hohen manuellen Aufwand und die Fehleranfälligkeit bei der Datenerfassung in der Fachanwendung IFAS. Durch einen intelligenten, digitalen Co-Piloten, der Dokumente mittels KI analysiert und Daten extrahiert, wird eine <strong>Effizienzsteigerung von über 80% pro Vorgang</strong> erwartet. Der Sachbearbeiter behält dabei die Kontrolle ("Mensch-in-der-Schleife"). Das Konzept legt Projektphasen, Vorgehen und ein modulares technisches Grundkonzept dar. Die IT empfiehlt die sofortige Genehmigung der Phasen 2 und 3 zur Etablierung einer universellen IFAS-Schnittstelle als Basis für dieses und zukünftige Digitalisierungsprojekte.</p></div>
+        <h2>1. Einleitung</h2><h3>Problemstellung: Die ungenutzten Potenziale manueller Prozesse</h3><p>Die öffentliche Verwaltung steht unter einem stetigen Druck zur Modernisierung und Effizienzsteigerung. In unserer Behörde bildet die Fachanwendung IFAS das Rückgrat vieler Kernprozesse. Eine detaillierte Analyse dieser Prozesse offenbart jedoch eine signifikante Herausforderung: Ein hoher Anteil an Arbeitszeit wird für manuelle, repetitive und fehleranfällige Tätigkeiten aufgewendet. Das Sichten von eingehenden Dokumenten, das manuelle Übertragen von Informationen in IFAS-Masken und das Anlegen von Vorgängen binden hochqualifizierte personelle Ressourcen an Aufgaben mit geringer Wertschöpfung. Dieser Zustand führt nicht nur zu direkten Effizienzverlusten, sondern birgt auch das Risiko von Erfassungsfehlern, die die Datenqualität und somit die Grundlage für fundierte Entscheidungen beeinträchtigt.</p><h3>Lösungsansatz: Der IFAS-Assistent als intelligenter Co-Pilot</h3><p>Um dieses Problem an der Wurzel zu packen, wird die Schaffung eines "IFAS-Assistenten" vorgeschlagen. Hierbei handelt es sich nicht um eine Ablösung des Menschen, sondern um dessen gezielte Unterstützung durch intelligente Technologie. Die Vision ist ein digitaler Co-Pilot, der die zeitraubende Vorarbeit leistet: Er liest eingehende Dokumente (z.B. PDF-Anzeigen), extrahiert mittels künstlicher Intelligenz (KI) die relevanten Daten und bereitet den Vorgang in einer übersichtlichen Maske zur finalen Prüfung vor. Der Sachbearbeiter behält nach dem "Mensch-in-der-Schleife"-Prinzip die volle Kontrolle.</p><ul><li><strong>Maximale Effizienz:</strong> Reduzierung des manuellen Aufwands um über 80 % pro Vorgang.</li><li><strong>Höchste Qualität:</strong> Minimierung von Übertragungsfehlern durch Automatisierung.</li><li><strong>Fokus auf Facharbeit:</strong> Entlastung der Mitarbeiter von monotonen Aufgaben zugunsten qualifizierter Tätigkeiten.</li><li><strong>Zukunftsfähigkeit:</strong> Schaffung einer skalierbaren Plattform, die schrittweise auf viele weitere Prozesse ausgeweitet werden kann.</li></ul><h3>Ziel des Dokuments</h3><p>Dieses Dokument stellt das zentrale Projektdurchführungskonzept für den IFAS-Assistenten dar. Es legt die Projektphasen und das Vorgehen mit klaren Arbeitsaufträgen fest, um eine strukturierte und erfolgreiche Umsetzung zu gewährleisten. Darüber hinaus skizziert es ein flexibles technisches Grundkonzept, das die modulare Architektur des Assistenten und die entscheidende Rolle einer universellen Schnittstelle zu IFAS beleuchtet. Es dient als umfassende Grundlage für die interne Projektplanung und die Beauftragung externer Partner.</p><hr>
+        <div class="automated-workflow"><h3>Der automatisierte Arbeitsablauf im Überblick</h3><div class="workflow-steps"><div class="workflow-step"><i class="fas fa-file-import icon"></i><strong>Schritt 1: Posteingang</strong><p>Ein neues Dokument (PDF) wird im überwachten Posteingangsordner erkannt und der Verarbeitung zugeführt.</p></div><div class="workflow-step"><i class="fas fa-brain icon"></i><strong>Schritt 2: Klassifizierung & Extraktion</strong><p>Die KI klassifiziert den Dokumententyp und extrahiert automatisch alle relevanten Daten mit der passenden Methode.</p></div><div class="workflow-step"><i class="fas fa-check-circle icon"></i><strong>Schritt 3: Prüfung & Übertragung</strong><p>Ein Sachbearbeiter prüft die vorausgefüllten Daten, bestätigt sie und überträgt den Vorgang per Klick sicher nach IFAS.</p></div></div></div><hr>
+        <h2>2. Projektphasen und Vorgehen</h2><div class="gantt-container"><h3>Gantt-Übersicht (Zeitplan KW 01/2026 - KW 32/2026)</h3><div class="gantt-header"><div class="title">Phase / Arbeitspaket</div><div class="gantt-timeline"><div>Woche 0</div><div>Woche 8</div><div>Woche 16</div><div>Woche 24</div><div>Woche 32</div></div></div>
+        
+        <!-- --- KORRIGIERTER HTML-BEREICH START --- -->
+        <div class="gantt-body">
+            <div class="gantt-phase">
+                <div>Phase 1: Projektinitialisierung & Setup</div>
+                <div class="gantt-chart"><div class="gantt-bar gantt-phase-1">2 Wochen</div></div>
+            </div>
+            <div class="gantt-task">
+                <div>1.1 Bildung Kernteam & Rollendefinition</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-1-1"></div></div>
+            </div>
+            <div class="gantt-task">
+                <div>1.2 Projektauftrag & Kick-off</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-1-2"></div></div>
+            </div>
+            <div class="gantt-phase">
+                <div>Phase 2: Anforderungsanalyse & Spezifikation</div>
+                <div class="gantt-chart"><div class="gantt-bar gantt-phase-2">4-6 Wochen</div></div>
+            </div>
+            <div class="gantt-task">
+                <div>2.1 Prozessanalyse Pilot-Anwendungsfälle</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-2-1"></div></div>
+            </div>
+            <div class="gantt-task">
+                <div>2.2 Fachkonzept & Pflichtenheft</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-2-2"></div></div>
+            </div>
+            <div class="gantt-phase">
+                <div>Phase 3: Beauftragung & Technische Konzeption</div>
+                <div class="gantt-chart"><div class="gantt-bar gantt-phase-3">4-8 Wochen</div></div>
+            </div>
+            <div class="gantt-task">
+                <div>3.1 Workshop & Angebotseinholung</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-3-1"></div></div>
+            </div>
+            <div class="gantt-task">
+                <div>3.2 Beauftragung & Feinplanung</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-3-2"></div></div>
+            </div>
+            <div class="gantt-phase">
+                <div>Phase 4: Entwicklung & Implementierung</div>
+                <div class="gantt-chart"><div class="gantt-bar gantt-phase-4">12-16 Wochen</div></div>
+            </div>
+            <div class="gantt-task">
+                <div>4.1 Entwicklung IFAS-Assistent</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-4-1"></div></div>
+            </div>
+            <div class="gantt-task">
+                <div>4.2 Integration & Test</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-4-2"></div></div>
+            </div>
+            <div class="gantt-phase">
+                <div>Phase 5: Pilotbetrieb & Rollout</div>
+                <div class="gantt-chart"><div class="gantt-bar gantt-phase-5">4 Wochen</div></div>
+            </div>
+            <div class="gantt-task">
+                <div>5.1 Pilotphase</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-5-1"></div></div>
+            </div>
+            <div class="gantt-task">
+                <div>5.2 Go-Live & Skalierung</div>
+                <div class="gantt-chart"><div class="gantt-bar-task gantt-task-5-2"></div></div>
+            </div>
+        </div>
+        <!-- --- KORRIGIERTER HTML-BEREICH ENDE --- -->
+        
+        </div>
+        <div class="phase"><h3>Phase 1: Projektinitialisierung & Setup <small>(Dauer: ca. 2 Wochen)</small></h3><div class="sub-section"><h4>Arbeitspaket 1.1: Bildung des Kernteams und Rollendefinition</h4><ul><li><strong>Ziel:</strong> Etablierung eines interdisziplinären Teams mit klaren Verantwortlichkeiten.</li><li><strong>Aufgaben:</strong> Benennung von Gesamtprojektleiter, Fachexperten (Pilot-Prozesse) und technischen Verantwortlichen.</li><li><strong>Ergebnis:</strong> Dokumentiertes Projektteam mit definierter Rollen- und Aufgabenverteilung.</li><li><strong>Verantwortlich:</strong> Abteilungsleitung 4 / IT</li></ul></div><div class="sub-section"><h4>Arbeitspaket 1.2: Erstellung des Projektauftrags & Kick-off</h4><ul><li><strong>Ziel:</strong> Offizieller Start des Projekts mit einem gemeinsamen Verständnis aller Beteiligten.</li><li><strong>Aufgaben:</strong> Ausformulierung des Projektauftrags (Ziele, Budget, Zeitplan), Durchführung eines Kick-off-Meetings.</li><li><strong>Ergebnis:</strong> Von allen Beteiligten unterzeichneter Projektauftrag.</li><li><strong>Verantwortlich:</strong> Projektleitung</li></ul></div></div>
+        <div class="phase"><h3>Phase 2: Anforderungsanalyse & Spezifikation <small>(Dauer: ca. 4-6 Wochen)</small></h3><div class="sub-section"><h4>Arbeitspaket 2.1: Prozessanalyse der Pilot-Anwendungsfälle</h4><ul><li><strong>Ziel:</strong> Detailliertes Verständnis der "Ist-" und Definition der "Soll-Prozesse".</li><li><strong>Aufgaben:</strong> Workshops mit Fachexperten, Dokumentation der Arbeitsabläufe, Identifikation aller benötigten IFAS-Datenfelder.</li><li><strong>Ergebnis:</strong> Dokumentierte Ist-/Soll-Prozesse und eine vollständige Liste der Datenfelder pro Anwendungsfall.</li><li><strong>Verantwortlich:</strong> Projektleitung, Fachexperten</li></ul></div><div class="sub-section"><h4>Arbeitspaket 2.2: Erstellung des Fachkonzepts & Pflichtenhefts</h4><ul><li><strong>Ziel:</strong> Überführung der fachlichen Anforderungen in eine technische Spezifikation für die Schnittstelle.</li><li><strong>Aufgaben:</strong> Die IT übersetzt die Anforderungen in ein detailliertes Pflichtenheft für die Firma Kisters.</li><li><strong>Ergebnis:</strong> Ein von Fachabteilung und IT abgenommenes Pflichtenheft.</li><li><strong>Verantwortlich:</strong> IT-Abteilung in Abstimmung mit Fachexperten</li></ul></div></div>
+        <div class="phase"><h3>Phase 3: Beauftragung & Technische Konzeption <small>(Dauer: ca. 4-8 Wochen)</small></h3><div class="sub-section"><h4>Arbeitspaket 3.1: Technischer Workshop & Angebotseinholung bei Kisters</h4><ul><li><strong>Ziel:</strong> Validierung der Machbarkeit und Einholung eines verbindlichen Angebots für die API.</li><li><strong>Aufgaben:</strong> Durchführung des Workshops mit Kisters, Präsentation des Pflichtenhefts, Anforderung eines Angebots.</li><li><strong>Ergebnis:</strong> Technisches Protokoll des Workshops und ein Angebot von Kisters.</li><li><strong>Verantwortlich:</strong> Projektleitung, IT-Abteilung</li></ul></div><div class="sub-section"><h4>Arbeitspaket 3.2: Beauftragung und Feinplanung</h4><ul><li><strong>Ziel:</strong> Formale Beauftragung und Synchronisierung der Zeitpläne.</li><li><strong>Aufgaben:</strong> Prüfung des Angebots, interner Vergabeprozess, formale Beauftragung, Abstimmung des Zeitplans.</li><li><strong>Ergebnis:</strong> Ein beauftragter Entwicklungsauftrag und ein synchronisierter Projektzeitplan.</li><li><strong>Verantwortlich:</strong> Projektleitung, Verwaltungsabteilung</li></ul></div></div>
+        <div class="phase"><h3>Phase 4: Entwicklung & Implementierung <small>(parallel zur API-Entwicklung)</small></h3><div class="sub-section"><h4>Arbeitspaket 4.1: Entwicklung des IFAS-Assistenten</h4><ul><li><strong>Ziel:</strong> Erstellung der Software zur Dokumentenverarbeitung und Validierung.</li><li><strong>Aufgaben:</strong> Aufbau der Grundarchitektur, Implementierung des Posteingangs-Monitors, Anbindung der Erkennungslogik, Entwicklung der Validierungs-Oberfläche.</li><li><strong>Ergebnis:</strong> Eine funktionsfähige Prototyp-Version des IFAS-Assistenten.</li><li><strong>Verantwortlich:</strong> IT-Abteilung (Entwicklung)</li></ul></div><div class="sub-section"><h4>Arbeitspaket 4.2: Integration und Test</h4><ul><li><strong>Ziel:</strong> Verbindung des Assistenten mit der IFAS-Schnittstelle und Sicherstellung der Funktionalität.</li><li><strong>Aufgaben:</strong> Anbindung der Test-API von Kisters, technische und funktionale Tests mit Fachexperten.</li><li><strong>Ergebnis:</strong> Ein technisch und fachlich getestetes Gesamtsystem in einer Testumgebung.</li><li><strong>Verantwortlich:</strong> IT-Abteilung, Fachexperten</li></ul></div></div>
+        <div class="phase"><h3>Phase 5: Pilotbetrieb & Rollout <small>(Dauer: ca. 4 Wochen)</small></h3><div class="sub-section"><h4>Arbeitspaket 5.1: Pilotphase für den ersten Anwendungsfall</h4><ul><li><strong>Ziel:</strong> Überprüfung des Systems unter realen Bedingungen mit einer begrenzten Nutzergruppe.</li><li><strong>Aufgaben:</strong> Installation in Produktivumgebung, Schulung der Pilotanwender, aktiver Betrieb und Sammeln von Feedback.</li><li><strong>Ergebnis:</strong> Ein stabiles System und ein Protokoll mit dem Feedback der Pilotanwender.</li><li><strong>Verantwortlich:</strong> Projektleitung, Fachexperten</li></ul></div><div class="sub-section"><h4>Arbeitspaket 5.2: Go-Live und Skalierung</h4><ul><li><strong>Ziel:</strong> Offizielle Inbetriebnahme für den ersten Prozess und Planung der nächsten Schritte.</li><li><strong>Aufgaben:</strong> Umsetzung des Feedbacks, offizielle Freigabe, Kommunikation des Erfolgs, Planung des Rollouts für weitere Anwendungsfälle.</li><li><strong>Ergebnis:</strong> Erfolgreicher Produktivbetrieb und eine Roadmap für weitere Automatisierungen.</li><li><strong>Verantwortlich:</strong> Projektleitung</li></ul></div></div>
+        
+        <h2>3. Technisches Grundkonzept</h2>
+        <h3>3.1 Modulare Systemarchitektur</h3>
+        <p>Die Architektur ist in drei logische, entkoppelte Schichten unterteilt, um maximale Wartbarkeit und Flexibilität zu gewährleisten. Dies ermöglicht es, einzelne Komponenten auszutauschen oder zu modernisieren, ohne das Gesamtsystem zu beeinträchtigen.</p>
+        <div class="architecture-layers"><div class="architecture-layer"><i class="fas fa-inbox icon"></i><strong>Schicht 1: Eingangskanäle (Input Layer)</strong><p>Nimmt Dokumente entgegen (Netzwerkordner, E-Mail-Anhänge, Funktionspostfächer).</p></div><div class="architecture-layer"><i class="fas fa-cogs icon"></i><strong>Schicht 2: Verarbeitungs-Engine (Processing Layer)</strong><p>Orchestrierungs-Dienst steuert den Ablauf, ruft Erkennungsmodule auf und stellt Daten für die Validierungsoberfläche bereit.</p></div><div class="architecture-layer"><i class="fas fa-exchange-alt icon"></i><strong>Schicht 3: Datenschnittstelle (Interface Layer)</strong><p>API-Client sendet validierte Daten sicher an die IFAS-Schnittstelle und verarbeitet Rückmeldungen.</p></div></div>
+        <h3>3.2 Die Universalschnittstelle zu IFAS (Kisters API)</h3>
+        <p>Die von Kisters zu entwickelnde Schnittstelle ist der Schlüssel zur sicheren und standardisierten Datenübergabe. Sie muss als moderne, zustandslose REST-API konzipiert werden, um maximale Kompatibilität und Sicherheit zu gewährleisten.</p>
+        <h4>Technologie-Stack</h4>
+        <ul><li><strong>Format:</strong> JSON (JavaScript Object Notation) als leichtgewichtiges Datenaustauschformat.</li><li><strong>Protokoll:</strong> Ausschließlich HTTPS zur Gewährleistung von Verschlüsselung und Integrität.</li><li><strong>Authentifizierung:</strong> Über API-Keys oder OAuth2-Tokens zur sicheren Autorisierung des Assistenten.</li></ul>
+        <h4>Beispielhafte API-Endpunkte</h4>
+        <ul><li><code>POST /api/v1/vorgang/pyrotechnik</code>: Legt einen neuen Vorgang für eine Pyro-Anzeige an.</li><li><code>GET /api/v1/betriebsstaetten?suche=[Adresse]</code>: Sucht nach Betriebsstätten und gibt deren ID zurück.</li><li><code>POST /api/v1/vorgang/{vorgangsID}/dokumente</code>: Hängt das Original-PDF an einen bestehenden Vorgang an.</li></ul>
+        <h3>3.3 Inhouse-Entwicklung der Erkennungslogik mit Python</h3>
+        <p>Anstatt sich von externen Anbietern abhängig zu machen, wird die Erkennungs-Engine modular und kosteneffizient mit Python und etablierten Open-Source-Bibliotheken entwickelt. Dies ermöglicht eine passgenaue Lösung für jeden Dokumententyp.</p>
+        <ul><li><strong>Möglichkeit 1: Regelbasierte, zonenbasierte Erkennung (Zonal OCR)</strong><ul><li><em>Anwendungsfall:</em> Hochstrukturierte, standardisierte Formulare (z.B. Mutterschutzmeldungen).</li><li><em>Vorteil:</em> Extrem schnell und präzise für gleichbleibende Layouts.</li><li><em>Bibliotheken:</em> PyMuPDF, OpenCV und Pytesseract.</li></ul></li><li><strong>Möglichkeit 2: KI-gestützte, kontextbasierte Erkennung (NLP)</strong><ul><li><em>Anwendungsfall:</em> Semi-strukturierte Dokumente mit variablem Layout (z.B. formlose Anzeigen).</li><li><em>Vorteil:</em> Hochflexibel und fähig, Informationen aus unterschiedlichsten Formaten zu verstehen.</li><li><em>Bibliotheken:</em> Pytesseract, spaCy (für Named Entity Recognition) und Regular Expressions.</li></ul></li><li><strong>Möglichkeit 3: Intelligente Vorgangssteuerung und Klassifizierung</strong><ul><li><em>Anwendungsfall:</em> Ein gemischter Posteingang, der eine automatische Weichenstellung erfordert.</li><li><em>Vorteil:</em> Schafft ein vollautomatisches, selbstoptimierendes System.</li><li><em>Bibliotheken:</em> Ein Klassifikationsmodell, trainiert mit scikit-learn, analysiert Dokumente und wählt die passende Erkennungsmethode.</li></ul></li></ul>
+
+        <h2>4. Risikomanagement</h2>
+        <p>Ein proaktives Risikomanagement ist entscheidend für den Projekterfolg. Die wichtigsten Risiken und mitigierenden Maßnahmen sind:</p>
+        <ul><li><strong>Abhängigkeit von Kisters (API-Entwicklung):</strong><ul><li><em>Risiko:</em> Terminverzögerungen bei der Bereitstellung der API, technische Probleme, Kostenüberschreitungen.</li><li><em>Maßnahme:</em> Enge Abstimmung mit Kisters, detaillierte Leistungsbeschreibung im Pflichtenheft, vertragliche Fixierung von Meilensteinen und Pönalen, regelmäßige Statusmeetings.</li></ul></li><li><strong>Akzeptanz der Mitarbeiter:</strong><ul><li><em>Risiko:</em> Widerstand gegen Veränderungen, Angst vor Kontrollverlust oder Arbeitsplatzverlust.</li><li><em>Maßnahme:</em> Frühzeitige und transparente Kommunikation der Vorteile (Entlastung, Fokus auf Facharbeit), Einbindung in die Prozessgestaltung (Workshops), umfassende Schulungen, Betonung des "Mensch-in-der-Schleife"-Prinzips.</li></ul></li><li><strong>Datenqualität der KI / Erkennungsgenauigkeit:</strong><ul><li><em>Risiko:</em> Unzureichende Erkennungsraten bei komplexen oder neuen Dokumententypen, Fehlklassifikationen.</li><li><em>Maßnahme:</em> Iterative Entwicklung und Training der KI-Modelle, klare Definition von Akzeptanzkriterien, umfassende Testphasen mit realen Daten, einfache Korrekturmöglichkeiten für Sachbearbeiter, Überwachung der Erkennungsraten im Pilotbetrieb.</li></ul></li><li><strong>Datenschutz und IT-Sicherheit:</strong><ul><li><em>Risiko:</em> Unberechtigter Zugriff, Datenlecks, Nichteinhaltung der DSGVO.</li><li><em>Maßnahme:</em> Einhaltung aller internen und externen Sicherheitsrichtlinien, Einsatz sicherer Authentifizierungsmechanismen (OAuth2), Verschlüsselung von Datenübertragung (HTTPS), regelmäßige Sicherheitsaudits und Penetrationstests.</li></ul></li><li><strong>Budgetüberschreitung:</strong><ul><li><em>Risiko:</em> Unvorhergesehene Kosten bei Kisters oder der internen Entwicklung.</li><li><em>Maßnahme:</em> Realistische Kostenschätzungen, Einplanung eines Risikopuffers, regelmäßiges Controlling und Abweichungsanalysen, transparente Kostenaufstellung und -kommunikation.</li></ul></li></ul>
+
+        <h2>5. Business Case & Wirtschaftlichkeit</h2>
+        <div class="business-case-visual"><div class="kpi-card-main"><div class="kpi-value">ca. 70.890 €</div><div class="kpi-label">Jährliche monetäre Ersparnis</div><div class="kpi-subtext">Basierend auf 4 Pilotprozessen und TV-L E6</div></div><div class="kpi-card-secondary"><div class="kpi-value">2.287 h</div><div class="kpi-label">Eingesparte Arbeitsstunden p.a.</div></div><div class="kpi-card-secondary"><div class="kpi-value">19.600</div><div class="kpi-label">Automatisierte Vorgänge p.a.</div></div><div class="kpi-card-secondary"><div class="kpi-value">&lt; 1 Jahr</div><div class="kpi-label">Erwartete Amortisationszeit</div></div><div class="savings-breakdown"><h4>Aufschlüsselung der jährlichen Einsparungen nach Vorgangsart</h4><div class="bar-chart"><div class="bar-item"><div class="bar-label">Mutterschutzmeldungen (11.000)</div><div class="bar-wrapper"><div class="bar" style="width: 56.1%; background-color: #319795;">ca. 39.820 €</div></div></div><div class="bar-item"><div class="bar-label">Unfallanzeigen (7.500)</div><div class="bar-wrapper"><div class="bar" style="width: 38.3%; background-color: #4fd1c5;">ca. 27.150 €</div></div></div><div class="bar-item"><div class="bar-label">Pyroanzeigen (1.000)</div><div class="bar-wrapper"><div class="bar" style="width: 5.1%; min-width: 60px; background-color: #81e6d9;">3.620 €</div></div></div><div class="bar-item"><div class="bar-label">Baustellenvoranzeigen (100)</div><div class="bar-wrapper"><div class="bar" style="width: 2%; min-width: 55px; background-color: #b2f5ea;">362 €</div></div></div></div></div></div>
+        <p>Das Projekt "IFAS-Assistent" ist nicht nur ein Innovationsprojekt, sondern eine strategische Investition in die Effizienz und Zukunftsfähigkeit unserer Verwaltung.</p>
+        <h3>5.1 Kostenübersicht (Schätzung)</h3>
+        <ul><li><strong>Einmalige Investitionen:</strong><ul><li><strong>Kisters API-Entwicklung:</strong> (Schätzung externer Dienstleister, basierend auf Pflichtenheft)</li><li><strong>Interne Entwicklung (Personalstunden IT):</strong> ca. 3 Personenmonate für Konzeption, Entwicklung der Erkennungslogik, Validierungsoberfläche und Integration.</li><li><strong>Infrastruktur (Server/VMs):</strong> Geringe zusätzliche Kosten für den Assistenten, da bestehende IT-Infrastruktur genutzt werden kann.</li><li><strong>Schulungsmaterialien & Erstschulung:</strong> Kosten für die Erstellung von Dokumentationen und Pilot-Schulungen.</li></ul></li><li><strong>Laufende Kosten (jährlich):</strong><ul><li><strong>Wartung & Support Kisters API:</strong> Geringe jährliche Lizenz- oder Wartungskosten.</li><li><strong>Wartung & Weiterentwicklung IFAS-Assistent:</strong> Ca. 0,5 Personenmonate/Jahr für Pflege der Erkennungslogik, Anpassungen an neue Dokumente, Optimierungen.</li><li><strong>Betriebskosten Infrastruktur:</strong> Geringfügige zusätzliche Energiekosten/Ressourcennutzung.</li></ul></li></ul>
+        <h3>5.2 Nutzen & Amortisation (Quantifizierbar)</h3>
+        <ul><li><strong>Quantifizierte Arbeitszeitersparnis:</strong><ul><li><em>Annahme:</em> Aktueller manueller Aufwand pro Erfassungsvorgang: durchschnittlich <strong>8 Minuten</strong>.</li><li><em>Annahme:</em> Automatisierungseffekt durch Assistent: <strong>>80% Reduktion</strong> des manuellen Aufwands, d.h. nur noch <strong>&lt; 1 Minute</strong> pro Vorgang (Prüfung und Bestätigung).</li><li><em>Betrachtete Pilotprozesse (Gesamt: 19.600 Vorgänge/Jahr):</em><ul><li>Pyroanzeigen: ca. 1.000 Stück / Jahr</li><li>Mutterschutzmeldungen: ca. 11.000 Meldungen pro Jahr</li><li>Unfallanzeigen: ca. 7.500 Stück pro Jahr</li><li>Baustellenvoranzeigen: ca. 100 Stück / Jahr</li></ul></li><li><em>Berechnung der Ersparnis (bei 7 Min. Ersparnis/Vorgang):</em><br>19.600 Vorgänge * 7 Min/Vorgang = 137.200 Minuten = <strong>ca. 2.287 Stunden pro Jahr</strong>.</li></ul></li><li><strong>Monetäre Ersparnis:</strong><p>Bei angenommenen durchschnittlichen Personalkosten ausgehend vom <strong>TV-L Entgeltgruppe 6</strong> (ca. 31 € pro Stunde inkl. Lohnnebenkosten) ergibt sich eine jährliche Ersparnis von: 2.287 Stunden * 31 €/Stunde = <strong>ca. 70.890 € pro Jahr</strong> allein für die vier Pilotprozesse.</p></li><li><strong>Qualitätssteigerung & Fehlerreduktion:</strong><p>Manuelle Übertragungsfehler führen zu Nachbearbeitungen und Dateninkonsistenzen. Durch die Automatisierung sinkt die Fehlerquote drastisch. Dies reduziert indirekte Kosten für Fehlerkorrekturen und erhöht die Verlässlichkeit der Daten.</p></li><li><strong>Mitarbeiterzufriedenheit & -motivation:</strong><p>Entlastung von monotonen und repetitiven Aufgaben, die als wenig wertschöpfend empfunden werden. Mitarbeiter können sich auf komplexere, fachlich anspruchsvollere Tätigkeiten konzentrieren. Dies steigert die Zufriedenheit und bindet Fachkräfte.</p></li><li><strong>Skalierbarkeit & Zukunftsfähigkeit:</strong><p>Die einmalige Investition in die universelle Kisters API und die modulare Architektur ermöglicht die schrittweise Ausweitung auf zahlreiche weitere IFAS-Prozesse. Jede weitere Automatisierung profitiert von der bereits geschaffenen Infrastruktur, was zu exponentiellen Effizienzgewinnen führt.</p></li><li><strong>Amortisationszeit:</strong><p>Basierend auf den geschätzten Kosten und der quantifizierten jährlichen Ersparnis kann eine Amortisationszeit von unter einem Jahr erwartet werden.</p></li></ul>
+        <h3>5.3 Erfolgsmessung (Key Performance Indicators - KPIs)</h3>
+        <ul><li><strong>Prozessdurchlaufzeit:</strong> Durchschnittliche Zeit von Dokumenteneingang bis zur IFAS-Buchung (Vorher vs. Nachher).</li><li><strong>Automatisierungsquote:</strong> Anteil der Vorgänge, die vom Assistenten ohne manuelle Korrektur verarbeitet werden können.</li><li><strong>Fehlerquote:</strong> Anzahl der Fehler pro 1.000 Vorgänge (manuell vs. Assistent).</li><li><strong>Mitarbeiterfeedback:</strong> Zufriedenheit der Nutzer des IFAS-Assistenten (mittels Umfragen).</li><li><strong>Anzahl der automatisierten Datenfelder:</strong> Anteil der Felder pro Vorgang, die von der KI korrekt erkannt werden.</li></ul>
+
+        <h2>6. Fazit und Empfehlung</h2>
+        <p>Das Projekt "IFAS-Assistent" ist ein wesentlicher Baustein für eine moderne, effiziente und zukunftsfähige Verwaltung. Das vorgestellte Konzept löst die Kernprobleme der manuellen Datenerfassung – Zeitaufwand und Fehleranfälligkeit – durch eine intelligente, sichere und skalierbare Architektur.</p>
+        <p>Die Kombination aus einer intern entwickelten, flexiblen Erkennungs-Engine und einer standardisierten, vom Hersteller Kisters bereitzustellenden API schafft eine nachhaltige und wirtschaftliche Lösung. Der "Mensch-in-der-Schleife"-Ansatz sichert dabei höchste Datenqualität und fördert die Akzeptanz bei den Mitarbeitenden.</p>
+        <p>Die IT-Abteilung (Abt. 4) spricht auf Basis der technischen Machbarkeit, des erheblichen Nutzens und der zukunftsweisenden Ausrichtung eine klare Empfehlung für die Umsetzung des Projekts aus.</p>
+        <p><strong>Der entscheidende erste Schritt ist die zeitnahe Einleitung von Phase 2 (Anforderungsanalyse) und Phase 3 (Beauftragung der Kisters API).</strong> Die Investition in diese universelle Schnittstelle legt nicht nur den Grundstein für den Erfolg dieses Pilotprojekts, sondern schafft eine essenzielle Infrastruktur für zahlreiche zukünftige Digitalisierungsvorhaben.</p>
+
+        <hr style="margin-top: 40px;">
+
+        <h2>7. Aufgabenplan & Freiwilligenliste</h2>
+        <p>Dieses Projekt lebt von der Beteiligung der Fachexperten. Bitte tragen Sie sich bei Interesse in die Spalte "Freiwillige/r" ein. <strong>Mehrfacheintragungen sind ausdrücklich erwünscht.</strong> Vielen Dank für Ihr Engagement!</p>
+        <p><small><strong>Hinweis:</strong> Zum Übermitteln muss ein Standard-E-Mail-Programm (z.B. Outlook) auf Ihrem Computer eingerichtet sein.</small></p>
+
+        <form id="volunteer-form">
+            <table class="task-table">
+                <thead>
+                    <tr>
+                        <th>Projektphase</th>
+                        <th>Einzelaufgabe</th>
+                        <th class="col-volunteer">Freiwillige/r</th>
+                        <th class="col-deadline">Deadline (Ende)</th>
+                        <th class="col-remark">Bemerkung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td rowspan="2" class="phase-cell">Phase 1:<br>Initialisierung</td>
+                        <td>Mithilfe bei der Ausformulierung des finalen Projektauftrags (Prüfung der Ziele aus Fachsicht).</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 01/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                    <tr>
+                        <td>Organisation des Kick-off-Meetings (Agenda-Abstimmung, Einladungen).</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 02/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3" class="phase-cell">Phase 2:<br>Analyse</td>
+                        <td>Teilnahme an Workshops zur Analyse der Ist-Prozesse (z.B. für Pyroanzeigen, Mutterschutz).</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 05/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                    <tr>
+                        <td>Dokumentation der IFAS-Datenfelder und Arbeitsabläufe für einen zugewiesenen Pilotprozess.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 07/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                     <tr>
+                        <td>Review des Fachkonzept-Entwurfs aus fachlicher Sicht und Feedback geben.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 08/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                     <tr>
+                        <td rowspan="1" class="phase-cell">Phase 3:<br>Konzeption</td>
+                        <td>Fachliche Prüfung des Workshop-Protokolls mit Kisters auf Vollständigkeit.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 12/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3" class="phase-cell">Phase 4:<br>Entwicklung & Test</td>
+                        <td>Beschaffung und Anonymisierung von ca. 20-30 Testdokumenten für jeden der 4 Pilotprozesse.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 20/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                    <tr>
+                        <td>Durchführung von funktionalen Tests in der Testumgebung nach Testplan.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 26/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                    <tr>
+                        <td>Dokumentation von Fehlern und Verbesserungsvorschlägen im bereitgestellten Tool.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 28/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                     <tr>
+                        <td rowspan="3" class="phase-cell">Phase 5:<br>Pilotbetrieb & Rollout</td>
+                        <td>Aktive Teilnahme als Pilotanwender im Produktivbetrieb für den ersten Anwendungsfall.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 31/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                     <tr>
+                        <td>Sammeln und Dokumentieren von Feedback aus dem Fachbereich während der Pilotphase.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 32/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                     <tr>
+                        <td>Mithilfe bei der Erstellung von Schulungsunterlagen und Kurzanleitungen für Kollegen.</td>
+                        <td><input type="text" placeholder="Name eintragen..."></td>
+                        <td>KW 32/2026</td>
+                        <td><input type="text" placeholder="Optional..."></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="submit" class="submit-button">Freiwilligenliste übermitteln</button>
+        </form>
+
+        <div id="email-fallback">
+            <p><strong>Das E-Mail-Programm konnte nicht automatisch geöffnet werden.</strong></p>
+            <p>Bitte kopieren Sie den folgenden Inhalt manuell in eine neue E-Mail an <strong>christian.lisowski@lasg.landsh.de</strong>.</p>
+            <p><strong>Betreff:</strong></p>
+            <input type="text" id="fallback-subject" readonly>
+            <p><strong>Inhalt:</strong></p>
+            <textarea id="fallback-body" readonly></textarea>
+        </div>
+    </div>
+
+    <script>
+        const volunteerForm = document.getElementById('volunteer-form');
+        volunteerForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const email = 'christian.lisowski@lasg.landsh.de';
+            const subject = 'Freiwilligenmeldung für das Projekt IFAS-Assistent';
+            let body = 'Hallo,\n\nhier ist die aktualisierte Freiwilligenliste für das Projekt IFAS-Assistent:\n\n';
+            let hasVolunteers = false;
+
+            const rows = volunteerForm.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                let taskCell, volunteerInput, remarkInput;
+
+                // This logic handles rows with 5 cells (first row of a phase)
+                // and rows with 4 cells (subsequent rows of a phase with rowspan)
+                if (row.cells.length === 5) {
+                    taskCell = row.cells[1];
+                    volunteerInput = row.cells[2].querySelector('input[type="text"]');
+                    remarkInput = row.cells[4].querySelector('input[type="text"]');
+                } else if (row.cells.length === 4) {
+                    taskCell = row.cells[0];
+                    volunteerInput = row.cells[1].querySelector('input[type="text"]');
+                    remarkInput = row.cells[3].querySelector('input[type="text"]');
+                } else {
+                    return; // Skip malformed rows
+                }
+
+                if (volunteerInput && volunteerInput.value.trim() !== '') {
+                    hasVolunteers = true;
+                    const taskDescription = taskCell.textContent.trim();
+                    const volunteerName = volunteerInput.value.trim();
+                    const remarkText = remarkInput.value.trim();
+
+                    body += `--------------------------------------------------\n`;
+                    body += `Aufgabe: ${taskDescription}\n`;
+                    body += `Freiwillige/r: ${volunteerName}\n`;
+                    
+                    if (remarkText !== '') {
+                        body += `Bemerkung: ${remarkText}\n`;
+                    }
+                }
+            });
+
+            if (!hasVolunteers) {
+                alert('Bitte tragen Sie sich für mindestens eine Aufgabe ein, bevor Sie die Liste übermitteln.');
+                return;
+            }
+
+            body += `--------------------------------------------------\n\n`;
+            body += 'Mit freundlichen Grüßen';
+
+            // Create the mailto link
+            const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+            // The mailto link can fail if it's too long or no email client is configured.
+            // A length of 2000 is a safe limit for most clients/browsers.
+            if (mailtoLink.length > 2000) {
+                alert("Die generierte E-Mail ist zu lang für den automatischen Versand. Bitte nutzen Sie das Fallback-Feld, um den Inhalt manuell zu kopieren.");
+                showFallback(subject, body);
+                return;
+            }
+
+            // Attempt to open the email client.
+            window.location.href = mailtoLink;
+        });
+
+        function showFallback(subject, body) {
+            document.getElementById('fallback-subject').value = subject;
+            document.getElementById('fallback-body').value = body;
+            document.getElementById('email-fallback').style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>

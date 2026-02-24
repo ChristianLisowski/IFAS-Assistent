@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IFAS-Assistent — Flowchart Posteingangsverarbeitung</title>
+<style>
+:root {
+  --bg: #0f172a; --bg2: #1e293b; --bg3: #334155;
+  --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+  --accent: #3b82f6; --accent2: #6366f1; --accent3: #8b5cf6;
+  --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --cyan: #06b6d4;
+  --border: #334155; --card: #1e293b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; padding:2rem; }
+h1 { font-size:2rem; font-weight:800; background:linear-gradient(135deg,#3b82f6,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:.5rem; text-align:center; }
+.subtitle { text-align:center; color:var(--text2); margin-bottom:2rem; }
+a.back { color:var(--accent); text-decoration:none; display:inline-block; margin-bottom:1rem; }
+a.back:hover { text-decoration:underline; }
+
+.flow { display:flex; flex-direction:column; align-items:center; gap:0; max-width:900px; margin:0 auto; }
+.node { padding:14px 24px; border-radius:12px; font-weight:600; font-size:.9rem; text-align:center; min-width:280px; max-width:500px; position:relative; z-index:1; }
+.node small { display:block; font-weight:400; font-size:.8rem; opacity:.8; margin-top:4px; }
+.arrow { width:2px; height:30px; background:var(--text3); position:relative; }
+.arrow::after { content:'▼'; position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); color:var(--text3); font-size:.7rem; }
+
+.node-start { background:linear-gradient(135deg,#1e40af,#3b82f6); color:#fff; border-radius:30px; }
+.node-process { background:var(--bg2); border:2px solid var(--accent); color:var(--text); }
+.node-decision { background:var(--bg2); border:2px solid var(--yellow); color:var(--text); border-radius:4px; transform:rotate(0deg); }
+.node-decision::before { content:'◆'; position:absolute; left:-20px; top:50%; transform:translateY(-50%); color:var(--yellow); }
+.node-action { background:var(--bg2); border:2px solid var(--green); color:var(--text); }
+.node-end { background:linear-gradient(135deg,#059669,#10b981); color:#fff; border-radius:30px; }
+.node-error { background:var(--bg2); border:2px solid var(--red); color:var(--text); }
+.node-ai { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; }
+
+.branch { display:flex; gap:2rem; align-items:flex-start; justify-content:center; width:100%; }
+.branch-col { display:flex; flex-direction:column; align-items:center; gap:0; }
+.branch-label { font-size:.75rem; font-weight:700; padding:2px 10px; border-radius:10px; margin-bottom:4px; }
+.branch-yes { background:rgba(16,185,129,.2); color:var(--green); }
+.branch-no { background:rgba(239,68,68,.2); color:var(--red); }
+
+.section-title { color:var(--accent); font-size:1rem; font-weight:700; margin:1.5rem 0 .5rem; padding:8px 16px; background:rgba(59,130,246,.1); border-radius:8px; border-left:3px solid var(--accent); width:100%; max-width:500px; text-align:left; }
+</style>
+</head>
+<body>
+
+<a href="Technische_Dokumentation.html" class="back">← Zurück zur Dokumentation</a>
+<h1>📊 Flowchart: Posteingangsverarbeitung</h1>
+<p class="subtitle">Vollständiger Ablauf von der Erkennung eines neuen Dokuments bis zur Übertragung an IFAS</p>
+
+<div class="flow">
+
+<!-- PHASE 1: EINGANGSQUELLEN-POLLING -->
+<div class="section-title">Phase 1 — Eingangsquellen-Überwachung (Scheduler)</div>
+
+<div class="node node-start">⏰ APScheduler-Timer löst Polling aus<small>Intervall: pro Quelle konfigurierbar (Standard 60s)</small></div>
+<div class="arrow"></div>
+
+<div class="node node-process">📋 Alle aktiven InputSources laden<small>Quelle muss is_active=True haben</small></div>
+<div class="arrow"></div>
+
+<div class="node node-decision">❓ Quelle Typ?<small>imap / folder / network</small></div>
+<div class="arrow"></div>
+
+<div class="branch" style="margin:1rem 0">
+  <div class="branch-col">
+    <div class="branch-label" style="background:rgba(59,130,246,.2); color:var(--accent)">IMAP</div>
+    <div class="node node-process" style="min-width:220px">📧 EmailConnector.poll()<small>IMAP-Login → Ordner öffnen<br>→ Ungelesene UIDs abrufen</small></div>
+  </div>
+  <div class="branch-col">
+    <div class="branch-label" style="background:rgba(16,185,129,.2); color:var(--green)">Ordner/Netzwerk</div>
+    <div class="node node-process" style="min-width:220px">📁 FolderMonitor.poll()<small>Ordner scannen<br>→ Neue Dateien erkennen</small></div>
+  </div>
+</div>
+
+<div class="arrow"></div>
+
+<!-- PHASE 2: IMPORT -->
+<div class="section-title">Phase 2 — Dokument-Import &amp; Duplikat-Prüfung</div>
+
+<div class="node node-process">🔍 Für jede neue Datei/E-Mail:<small>SHA256-Hash berechnen (Content-Hash)</small></div>
+<div class="arrow"></div>
+
+<div class="node node-decision">❓ Content-Hash bereits in DB?<small>Document.content_hash vergleichen</small></div>
+<div class="arrow"></div>
+
+<div class="branch" style="margin:1rem 0">
+  <div class="branch-col">
+    <div class="branch-label branch-yes">✓ Duplikat</div>
+    <div class="node node-error" style="min-width:180px">⏭️ Überspringen<small>Kein Import</small></div>
+  </div>
+  <div class="branch-col">
+    <div class="branch-label branch-no">✗ Neu</div>
+    <div class="node node-action" style="min-width:180px">💾 Datei in /uploads speichern<small>UUID als Dateiname</small></div>
+  </div>
+</div>
+
+<div class="arrow"></div>
+
+<div class="node node-process">📝 Document-Datensatz erstellen<small>Status = "pending", Metadaten extrahieren<br>Bei E-Mail: Betreff, Absender, Datum, Anhänge speichern</small></div>
+<div class="arrow"></div>
+
+<div class="node node-process">📄 Textextraktion starten<small>DocumentExtractor / PDFExtractor je nach Dateityp<br>PDF: Text-Layer → Fallback OCR (Tesseract)<br>DOCX/ODT: python-docx / odfpy<br>EML/MSG: E-Mail-Parser + Attachment-Extraktion</small></div>
+<div class="arrow"></div>
+
+<div class="node node-decision">❓ auto_analyze für Quelle aktiv?</div>
+<div class="arrow"></div>
+
+<div class="branch" style="margin:1rem 0">
+  <div class="branch-col">
+    <div class="branch-label branch-yes">Ja</div>
+    <div class="node node-action" style="min-width:180px">→ Sofort weiter zu Phase 3</div>
+  </div>
+  <div class="branch-col">
+    <div class="branch-label branch-no">Nein</div>
+    <div class="node node-process" style="min-width:180px">⏸️ Warten auf manuellen Start<small>Dashboard: "Analyse starten"</small></div>
+  </div>
+</div>
+
+<div class="arrow"></div>
+
+<!-- PHASE 3: KI-ANALYSE -->
+<div class="section-title">Phase 3 — KI-gestützte Dokumentenanalyse</div>
+
+<div class="node node-process">🔒 Analysis-Lock erwerben<small>threading.Lock() → nur 1 Analyse gleichzeitig</small></div>
+<div class="arrow"></div>
+
+<div class="node node-action">📊 Status → "analyzing"<small>analysis_started_at = jetzt</small></div>
+<div class="arrow"></div>
+
+<div class="node node-decision">❓ LMStudio erreichbar?<small>HTTP GET /v1/models</small></div>
+<div class="arrow"></div>
+
+<div class="branch" style="margin:1rem 0">
+  <div class="branch-col">
+    <div class="branch-label branch-yes">✓ Online</div>
+    <div class="node node-ai" style="min-width:250px">🤖 LMStudioService.analyze_document()<small>
+      1. Prompt dynamisch aus Kategorien/Feldern bauen<br>
+      2. Text + Attachments + Kategorien senden<br>
+      3. LLM antwortet mit JSON:<br>
+      &nbsp;&nbsp;→ category_id, confidence, fields<br>
+      4. Response parsen &amp; validieren
+    </small></div>
+  </div>
+  <div class="branch-col">
+    <div class="branch-label branch-no">✗ Offline</div>
+    <div class="node node-process" style="min-width:250px">🔤 Fallback: Keyword-Analyse<small>Text nach Kategorie-Keywords durchsuchen<br>Keine Feld-Extraktion möglich</small></div>
+  </div>
+</div>
+
+<div class="arrow"></div>
+
+<div class="node node-action">💾 Analyse-Ergebnis speichern<small>
+  Document.category_id = erkannte Kategorie<br>
+  Document.ai_confidence = Konfidenz-Score<br>
+  Document.extracted_data_json = extrahierte Felder<br>
+  Document.status → "ready"<br>
+  Document.analyzed_at = jetzt
+</small></div>
+<div class="arrow"></div>
+
+<!-- PHASE 4: VALIDIERUNG -->
+<div class="section-title">Phase 4 — Manuelle Validierung (Sachbearbeiter)</div>
+
+<div class="node node-process">👁️ Sachbearbeiter öffnet Validierungsansicht<small>Side-by-Side: Original ↔ Extrahierte Daten</small></div>
+<div class="arrow"></div>
+
+<div class="node node-process">✏️ Prüfung &amp; Korrektur<small>
+  • Kategorie bestätigen oder ändern<br>
+  • Extrahierte Felder prüfen &amp; korrigieren<br>
+  • Betriebsstätte zuordnen (Live-Suche)<br>
+  • Konfidenz-Markierung (niedrig → gelbes Feld)
+</small></div>
+<div class="arrow"></div>
+
+<div class="node node-decision">❓ Entscheidung des Sachbearbeiters</div>
+<div class="arrow"></div>
+
+<div class="branch" style="margin:1rem 0">
+  <div class="branch-col">
+    <div class="branch-label branch-yes">✓ Übertragen</div>
+    <div class="node node-action" style="min-width:200px">→ Weiter zu Phase 5</div>
+  </div>
+  <div class="branch-col">
+    <div class="branch-label branch-no">✗ Ablehnen</div>
+    <div class="node node-error" style="min-width:200px">🗑️ Status → "rejected"<small>E-Mail → Trash-Ordner verschieben<br>Ordner → _rejected verschieben</small></div>
+  </div>
+</div>
+
+<div class="arrow"></div>
+
+<!-- PHASE 5: IFAS-ÜBERTRAGUNG -->
+<div class="section-title">Phase 5 — Übertragung an IFAS-Fachverfahren</div>
+
+<div class="node node-process">🔗 IfasApiClient.create_anzeige()<small>
+  Art/Zusatzart aus Kategorie-Mapping<br>
+  BS-Nr. aus Betriebsstätten-Zuordnung<br>
+  Felder via content_id_ifas mappen
+</small></div>
+<div class="arrow"></div>
+
+<div class="node node-process">📎 IfasApiClient.attach_document()<small>Original-Dokument an Anzeige anhängen</small></div>
+<div class="arrow"></div>
+
+<div class="node node-action">💾 Ergebnis speichern<small>
+  Document.status → "transferred"<br>
+  Document.ifas_aktenzeichen = Aktenzeichen<br>
+  Document.transferred_at = jetzt<br>
+  Document.transferred_by = aktueller User
+</small></div>
+<div class="arrow"></div>
+
+<div class="node node-process">📧 E-Mail verschieben (IMAP)<small>In konfigurierten "Processed"-Ordner verschieben</small></div>
+<div class="arrow"></div>
+
+<div class="node node-end">✅ Verarbeitung abgeschlossen<small>Dokument erfolgreich an IFAS übertragen</small></div>
+
+</div>
+
+<footer style="text-align:center; padding:2rem; color:var(--text3); font-size:.85rem; margin-top:3rem; border-top:1px solid var(--border);">
+  IFAS-Assistent v2.0 — Flowchart Posteingangsverarbeitung — Erstellt am 24.02.2026
+</footer>
+
+</body>
+</html>

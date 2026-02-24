@@ -1,0 +1,460 @@
+{% extends "admin/index.html" %}
+
+{% block admin_content %}
+<div class="glass rounded-2xl border border-white/20 shadow-sm">
+    <div class="p-6 border-b border-slate-100">
+        <h2 class="text-lg font-semibold text-slate-800">{{ 'Eingangslayer bearbeiten' if source else 'Neuer
+            Eingangslayer' }}</h2>
+    </div>
+    <form action="{{ url_for('admin.edit_input', source_id=source.id) if source else url_for('admin.new_input') }}"
+        method="POST" class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                <input type="text" name="name" value="{{ source.name if source else '' }}" required
+                    class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Typ</label>
+                <select name="source_type" id="source-type"
+                    class="w-full px-4 py-2.5 border border-slate-200 rounded-lg">
+                    <option value="folder" {{ 'selected' if not source or source.source_type=='folder' }}>Lokaler Ordner
+                    </option>
+                    <option value="network" {{ 'selected' if source and source.source_type=='network' }}>Netzwerkpfad
+                    </option>
+                    <option value="imap" {{ 'selected' if source and source.source_type=='imap' }}>IMAP E-Mail</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Folder Config with Browser -->
+        <div id="folder-config" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Ordnerpfad</label>
+                <div class="flex gap-2">
+                    <input type="text" name="path" id="folder-path"
+                        value="{{ source.get_config().path if source else '' }}"
+                        class="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg font-mono text-sm"
+                        placeholder="Ordner auswählen...">
+                    <button type="button" onclick="openFolderBrowser()"
+                        class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-2 transition-all">
+                        <i data-lucide="folder-open" class="w-4 h-4"></i>
+                        Durchsuchen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="folder-processing-config" class="hidden pt-4 border-t border-slate-100 mt-4 space-y-4">
+            <h3 class="text-sm font-semibold text-slate-800">Verarbeitung (Lokale Ordner)</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Verarbeitet (Verschieben)</label>
+                    <input type="text" name="folder_processed"
+                        value="{{ source.processed_folder if source and source.source_type in ['folder', 'network'] else 'Processed' }}"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg"
+                        placeholder="Unterordner z.B. Processed">
+                    <p class="text-xs text-slate-500 mt-1">Wohin erfolgreich verarbeitete Dateien verschoben werden.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Papierkorb (Löschen)</label>
+                    <input type="text" name="folder_trash"
+                        value="{{ source.trash_folder if source and source.source_type in ['folder', 'network'] else 'Trash' }}"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg"
+                        placeholder="Unterordner z.B. Trash">
+                    <p class="text-xs text-slate-500 mt-1">Wohin gelöschte Dateien verschoben werden.</p>
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Verworfen (Optional)</label>
+                    <input type="text" name="folder_discarded"
+                        value="{{ source.discarded_folder if source and source.source_type in ['folder', 'network'] else '' }}"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg"
+                        placeholder="Unterordner z.B. Discarded">
+                    <p class="text-xs text-slate-500 mt-1">Wohin verworfene Dateien verschoben werden (leer = keine
+                        Aktion).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- IMAP Config -->
+        <div id="imap-config" class="space-y-4 hidden">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">IMAP Server</label>
+                    <input type="text" name="imap_server" value="{{ source.get_config().server if source else '' }}"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Port</label>
+                    <div class="flex items-center gap-3">
+                        <input type="number" name="imap_port" value="{{ source.get_config().port if source else 993 }}"
+                            class="w-full px-4 py-2.5 border border-slate-200 rounded-lg">
+                        <label class="flex items-center gap-2 whitespace-nowrap">
+                            <input type="checkbox" name="imap_ssl" {{ 'checked' if not source or
+                                source.get_config().get('ssl', True) else '' }}
+                                class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500">
+                            <span class="text-sm text-slate-700">SSL/TLS</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Benutzer</label>
+                    <input type="text" name="imap_user" value="{{ source.get_config().username if source else '' }}"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Passwort</label>
+                    <input type="password" name="imap_pass" placeholder="{{ '(unverändert)' if source else '' }}"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg">
+                </div>
+            </div>
+        </div>
+
+        <div id="imap-folders" class="pt-4 border-t border-slate-100 mt-4 hidden">
+            <h3 class="text-sm font-semibold text-slate-800 mb-3">E-Mail Verarbeitung</h3>
+
+            <div class="mb-4">
+                <button type="button" onclick="loadImapFolders()"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-sm flex items-center gap-2 transition-all">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
+                    Ordner vom Server laden
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Papierkorb (Löschen)</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="imap_trash" list="folder-list-datalist"
+                            value="{{ source.trash_folder if source else 'Trash' }}"
+                            class="w-full px-4 py-2.5 border border-slate-200 rounded-lg" placeholder="z.B. Trash">
+                        <button type="button" onclick="createImapFolder('trash')" title="Neuen Ordner erstellen"
+                            class="px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600">
+                            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Zielordner beim Löschen von Dokumenten.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Verarbeitet (Archiv)</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="imap_processed" list="folder-list-datalist"
+                            value="{{ source.processed_folder if source else 'Processed' }}"
+                            class="w-full px-4 py-2.5 border border-slate-200 rounded-lg" placeholder="z.B. Processed">
+                        <button type="button" onclick="createImapFolder('processed')" title="Neuen Ordner erstellen"
+                            class="px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600">
+                            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Zielordner nach erfolgreichem IFAS-Export.</p>
+                </div>
+
+                <div class="col-span-2 mt-2 pt-2 border-t border-slate-50">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Verworfen (Optional)</label>
+                    <div class="flex gap-2">
+                        <input type="text" name="imap_discarded" list="folder-list-datalist"
+                            value="{{ source.discarded_folder if source and source.discarded_folder else '' }}"
+                            class="w-full px-4 py-2.5 border border-slate-200 rounded-lg"
+                            placeholder="Leer lassen = Im Posteingang behalten">
+                        <button type="button" onclick="createImapFolder('discarded')" title="Neuen Ordner erstellen"
+                            class="px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600">
+                            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Zielordner beim "Verwerfen" (ohne Löschen). Wenn leer: E-Mail
+                        bleibt im Posteingang (Gelesen).</p>
+                </div>
+            </div>
+
+            <datalist id="folder-list-datalist">
+                <!-- Will be populated by JS -->
+            </datalist>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Poll-Intervall (Sekunden)</label>
+                <input type="number" name="poll_interval" value="{{ source.poll_interval if source else 60 }}" min="10"
+                    class="w-full px-4 py-2.5 border border-slate-200 rounded-lg">
+            </div>
+            <div class="flex items-center pt-6">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" name="is_active" {{ 'checked' if not source or source.is_active }}
+                        class="w-5 h-5 rounded">
+                    <span>Aktiv</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+            <button type="submit"
+                class="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Speichern</button>
+            <a href="{{ url_for('admin.inputs') }}"
+                class="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Abbrechen</a>
+        </div>
+    </form>
+</div>
+
+<!-- Folder Browser Modal -->
+<div id="folder-browser-modal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Ordner auswählen</h3>
+            <button onclick="closeFolderBrowser()" class="p-2 hover:bg-slate-100 rounded-lg">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Current Path -->
+        <div class="p-4 bg-slate-50 border-b flex items-center gap-2">
+            <i data-lucide="folder" class="w-5 h-5 text-slate-500"></i>
+            <span id="current-path-display" class="font-mono text-sm text-slate-600">-</span>
+        </div>
+
+        <!-- Quick Access -->
+        <div class="p-3 border-b flex flex-wrap gap-2" id="drives-bar">
+            <!-- Drives will be loaded here -->
+        </div>
+
+        <!-- Folder List -->
+        <div class="flex-1 overflow-y-auto p-2" id="folder-list" style="min-height: 300px;">
+            <!-- Folders will be loaded here -->
+        </div>
+
+        <!-- Actions -->
+        <div class="p-4 border-t bg-slate-50 flex justify-between items-center">
+            <button onclick="createNewFolder()"
+                class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg flex items-center gap-2">
+                <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                Neuer Ordner
+            </button>
+            <div class="flex gap-2">
+                <button onclick="closeFolderBrowser()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Abbrechen</button>
+                <button onclick="selectCurrentFolder()"
+                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                    Auswählen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentBrowsePath = '';
+
+    function updateVisibility() {
+        const type = document.getElementById('source-type').value;
+        const isFolder = type === 'folder' || type === 'network';
+        const isImap = type === 'imap';
+
+        document.getElementById('folder-config').classList.toggle('hidden', !isFolder);
+        document.getElementById('folder-processing-config').classList.toggle('hidden', !isFolder);
+        document.getElementById('imap-config').classList.toggle('hidden', !isImap);
+        document.getElementById('imap-folders').classList.toggle('hidden', !isImap);
+    }
+
+    // Type switching
+    document.getElementById('source-type')?.addEventListener('change', updateVisibility);
+
+    // Initialize visibility
+    updateVisibility();
+
+    // Folder Browser Functions
+    function openFolderBrowser() {
+        document.getElementById('folder-browser-modal').classList.remove('hidden');
+        const currentPath = document.getElementById('folder-path').value;
+        browseTo(currentPath || '');
+    }
+
+    function closeFolderBrowser() {
+        document.getElementById('folder-browser-modal').classList.add('hidden');
+    }
+
+    async function browseTo(path) {
+        currentBrowsePath = path;
+        document.getElementById('current-path-display').textContent = path || 'Computer';
+
+        try {
+            const res = await fetch(`/api/folders/browse?path=${encodeURIComponent(path)}`);
+            const data = await res.json();
+
+            // Update drives bar
+            const drivesBar = document.getElementById('drives-bar');
+            drivesBar.innerHTML = '';
+
+            if (data.drives && data.drives.length > 0) {
+                data.drives.forEach(drive => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded text-sm font-medium';
+                    btn.textContent = drive.label;
+                    btn.onclick = () => browseTo(drive.path);
+                    drivesBar.appendChild(btn);
+                });
+            }
+
+            // Update folder list
+            const folderList = document.getElementById('folder-list');
+            folderList.innerHTML = '';
+
+            // Add parent folder link
+            if (data.parent_path) {
+                const parentDiv = document.createElement('div');
+                parentDiv.className = 'flex items-center gap-3 p-3 hover:bg-slate-100 rounded-lg cursor-pointer';
+                parentDiv.innerHTML = `
+                    <span class="w-5 h-5 text-slate-400 text-center">↑</span>
+                    <span class="text-slate-600">..</span>
+                `;
+                parentDiv.onclick = () => browseTo(data.parent_path);
+                folderList.appendChild(parentDiv);
+            }
+
+            // Add folders
+            if (data.folders && data.folders.length > 0) {
+                data.folders.forEach(folder => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-3 p-3 hover:bg-slate-100 rounded-lg cursor-pointer';
+                    div.innerHTML = `
+                        <span class="w-5 h-5 ${folder.is_common ? 'text-amber-500' : 'text-slate-400'} text-center">📁</span>
+                        <span class="text-slate-700">${folder.name}</span>
+                    `;
+                    div.onclick = () => browseTo(folder.path);
+                    folderList.appendChild(div);
+                });
+            } else if (!data.parent_path) {
+                folderList.innerHTML = '<p class="p-4 text-slate-500 text-center">Keine Ordner gefunden</p>';
+            }
+
+            if (data.error) {
+                folderList.innerHTML = `<p class="p-4 text-red-500 text-center">${data.error}</p>`;
+            }
+
+            // Reinitialize Lucide icons if available
+            try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) { }
+
+        } catch (e) {
+            console.error('Browse error:', e);
+            document.getElementById('folder-list').innerHTML = `<p class="p-4 text-red-500 text-center">Fehler: ${e.message}</p>`;
+        }
+    }
+
+    function selectCurrentFolder() {
+        if (currentBrowsePath) {
+            document.getElementById('folder-path').value = currentBrowsePath;
+        }
+        closeFolderBrowser();
+    }
+
+    async function createNewFolder() {
+        const name = prompt('Name des neuen Ordners:');
+        if (!name) return;
+
+        const newPath = currentBrowsePath ? `${currentBrowsePath}\\${name}` : name;
+
+        try {
+            const res = await fetch('/api/folders/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: newPath })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                browseTo(currentBrowsePath);
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        } catch (e) {
+            alert('Fehler beim Erstellen');
+        }
+    }
+
+    // IMAP Folder Config
+    async function loadImapFolders() {
+        const btn = document.querySelector('button[onclick="loadImapFolders()"]');
+        const icon = document.getElementById('refresh-icon');
+
+        icon.classList.add('animate-spin');
+        btn.disabled = true;
+
+        const payload = {
+            server: document.getElementsByName('imap_server')[0].value,
+            port: document.getElementsByName('imap_port')[0].value,
+            username: document.getElementsByName('imap_user')[0].value,
+            password: document.getElementsByName('imap_pass')[0].value || '{{ source.get_config().password if source else "" }}',
+            ssl: document.getElementsByName('imap_ssl')[0] ? document.getElementsByName('imap_ssl')[0].checked : true
+        };
+
+        try {
+            const res = await fetch('/admin/imap/folders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const datalist = document.getElementById('folder-list-datalist');
+                datalist.innerHTML = '';
+                data.folders.forEach(folder => {
+                    const opt = document.createElement('option');
+                    opt.value = folder;
+                    datalist.appendChild(opt);
+                });
+                alert('Ordnerliste aktualisiert (' + data.folders.length + ' Ordner)');
+            } else {
+                alert('Fehler beim Laden: ' + data.error);
+            }
+        } catch (e) {
+            alert('Verbindungsfehler: ' + e);
+        } finally {
+            icon.classList.remove('animate-spin');
+            btn.disabled = false;
+        }
+    }
+
+    async function createImapFolder(targetInput) {
+        const name = prompt('Name des neuen Ordners (z.B. "Archive/2026"):');
+        if (!name) return;
+
+        const payload = {
+            server: document.getElementsByName('imap_server')[0].value,
+            port: document.getElementsByName('imap_port')[0].value,
+            username: document.getElementsByName('imap_user')[0].value,
+            password: document.getElementsByName('imap_pass')[0].value || '{{ source.get_config().password if source else "" }}',
+            ssl: document.getElementsByName('imap_ssl')[0] ? document.getElementsByName('imap_ssl')[0].checked : true,
+            folder_name: name
+        };
+
+        try {
+            const res = await fetch('/admin/imap/folders/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert('Ordner "' + name + '" erstellt.');
+                // Update input
+                if (targetInput === 'trash') {
+                    document.getElementsByName('imap_trash')[0].value = name;
+                } else if (targetInput === 'processed') {
+                    document.getElementsByName('imap_processed')[0].value = name;
+                } else if (targetInput === 'discarded') {
+                    document.getElementsByName('imap_discarded')[0].value = name;
+                }
+                // Reload list
+                loadImapFolders();
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        } catch (e) {
+            alert('Fehler beim Erstellen: ' + e);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Betriebsstätten-Einstellungen - Admin - IFAS-Assistent{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-slate-50">
+    <!-- Navigation -->
+    <nav class="glass border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="flex items-center gap-3">
+                        <div class="flex items-center justify-center">
+                            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"
+                                class="w-14 h-14 object-contain rounded-xl"
+                                onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg\'><i data-lucide=\'file-check\' class=\'w-7 h-7 text-white\'></i></div>'">
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold text-slate-800">IFAS-Assistent</h1>
+                            <p class="text-xs text-slate-500">Administration</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ url_for('admin.settings') }}"
+                        class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <i data-lucide="arrow-left" class="w-4 h-4 inline mr-1"></i>
+                        Zurück zu Einstellungen
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+            <i data-lucide="building-2" class="w-7 h-7 text-primary-600"></i>
+            Betriebsstätten & IFAS Konfiguration
+        </h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-6 flex flex-col gap-2">
+            {% for category, message in messages %}
+            <div
+                class="p-4 rounded-xl shadow-sm flex items-center justify-between {{ 'bg-green-50 text-green-800 border border-green-200' if category == 'success' else 'bg-red-50 text-red-800 border border-red-200' }}">
+                <span>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-50 hover:opacity-100">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="config-form" class="space-y-8" onsubmit="prepareSubmit(event)">
+
+            <!-- BS Form Configuration -->
+            <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm" open>
+                <summary
+                    class="flex items-center justify-between p-4 cursor-pointer list-none bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-indigo-100 rounded-lg">
+                            <i data-lucide="layout-list" class="w-5 h-5 text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-800">Formularfelder "Neue BS anlegen"</h2>
+                            <p class="text-xs text-slate-500">Konfiguration der Eingabefelder für neue Betriebsstätten
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="resetBSConfig(event)"
+                            class="text-xs text-slate-500 hover:text-indigo-600 mr-4 px-2 py-1 rounded hover:bg-white border border-transparent hover:border-slate-200 transition-all">
+                            Standards wiederherstellen
+                        </button>
+                        <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 group-open:rotate-180"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
+                </summary>
+
+                <div class="p-6 border-t border-slate-200">
+                    <div class="flex gap-3 mb-6 bg-blue-50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800">
+                        <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
+                        <p>
+                            Hier definieren Sie, welche Daten beim Anlegen abgefragt werden.<br>
+                            <span class="font-semibold">Tipp:</span> Der <strong>Platzhalter</strong> ist der graue
+                            Text, der im leeren Feld erscheint (z.B. "Max Mustermann"). Er hilft dem Nutzer zu
+                            verstehen, was eingegeben werden soll.
+                        </p>
+                    </div>
+
+                    <!-- Hidden Input for JSON storage -->
+                    <input type="hidden" name="bs_form_fields" id="bs_form_fields">
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                <tr>
+                                    <th class="px-4 py-2 font-medium text-slate-500 w-10">#</th>
+                                    <th class="px-4 py-2 font-medium text-slate-500">Beschriftung (Label)</th>
+                                    <th class="px-4 py-2 font-medium text-slate-500">Key (Intern)</th>
+                                    <th class="px-4 py-2 font-medium text-slate-500 w-24">Typ</th>
+                                    <th class="px-4 py-2 font-medium text-slate-500 w-32">Layout</th>
+                                    <th class="px-4 py-2 font-medium text-slate-500"
+                                        title="Grauer Hinweistext im leeren Feld">Platzhalter <i
+                                            data-lucide="help-circle" class="w-3 h-3 inline text-slate-400"></i></th>
+                                    <th class="px-4 py-2 font-medium text-slate-500 w-16 text-center">Pfl.</th>
+                                    <th class="px-4 py-2 font-medium text-slate-500 w-24 text-right">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fields-table-body" class="divide-y divide-slate-100 bg-white">
+                                <!-- Rows rendered by JS -->
+                            </tbody>
+                            <tfoot class="bg-slate-50 border-t border-slate-200">
+                                <tr>
+                                    <td colspan="8" class="px-4 py-3">
+                                        <button type="button" onclick="addNewField()"
+                                            class="text-sm font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M5 12h14" />
+                                                <path d="M12 5v14" />
+                                            </svg>
+                                            Neues Feld hinzufügen
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                </div>
+            </details>
+
+            <!-- Save Button -->
+            <div class="flex justify-end gap-3 sticky bottom-4 z-40">
+                <div class="glass p-2 rounded-xl border border-white/20 shadow-lg flex gap-3">
+                    <a href="{{ url_for('admin.settings') }}"
+                        class="px-6 py-3 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 bg-white/80">
+                        Abbrechen
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+                        <i data-lucide="save" class="w-5 h-5"></i>
+                        Konfiguration speichern
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="application/json" id="bs-form-fields-data">
+    {{ bs_form_fields | tojson }}
+</script>
+
+<script>
+    // Initial data from backend
+    let fieldsData = [];
+    try {
+        const rawData = document.getElementById('bs-form-fields-data').textContent;
+        fieldsData = JSON.parse(rawData);
+    } catch (e) {
+        console.error("Error parsing BS fields config:", e);
+        fieldsData = [];
+    }
+
+    // Ensure it's an array
+    if (!Array.isArray(fieldsData)) {
+        // Fallback or attempt repeat parse if double-encoded
+        try {
+            if (typeof fieldsData === 'string') {
+                fieldsData = JSON.parse(fieldsData);
+            }
+        } catch (e) {
+            fieldsData = [];
+        }
+    }
+    if (!Array.isArray(fieldsData)) fieldsData = [];
+
+    const tableBody = document.getElementById('fields-table-body');
+
+    function renderTable() {
+        tableBody.innerHTML = '';
+
+        fieldsData.forEach((field, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 group';
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-slate-400 font-mono text-xs align-middle">
+                    <div class="flex flex-col gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" onclick="moveField(${index}, -1)" class="hover:text-primary-600 p-0.5" ${index === 0 ? 'disabled class="opacity-30 cursor-not-allowed p-0.5"' : ''} title="Nach oben verschieben">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                        </button>
+                        <button type="button" onclick="moveField(${index}, 1)" class="hover:text-primary-600 p-0.5" ${index === fieldsData.length - 1 ? 'disabled class="opacity-30 cursor-not-allowed p-0.5"' : ''} title="Nach unten verschieben">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                    </div>
+                </td>
+                <td class="px-4 py-2 align-middle">
+                    <input type="text" value="${field.label}" oninput="updateField(${index}, 'label', this.value)" 
+                        class="w-full px-2 py-1.5 border border-transparent hover:border-slate-200 focus:border-primary-500 rounded bg-transparent focus:bg-white text-sm outline-none transition-colors" required placeholder="Bezeichnung">
+                </td>
+                <td class="px-4 py-2 align-middle">
+                    <input type="text" value="${field.key}" oninput="updateField(${index}, 'key', this.value)" 
+                        class="w-full px-2 py-1.5 border border-transparent hover:border-slate-200 focus:border-primary-500 rounded bg-transparent focus:bg-white text-sm outline-none font-mono text-slate-600 transition-colors" required placeholder="key_name">
+                </td>
+                <td class="px-4 py-2 align-middle">
+                    <select onchange="updateField(${index}, 'field_type', this.value)" class="w-24 px-2 py-1.5 border border-transparent hover:border-slate-200 focus:border-primary-500 rounded bg-transparent focus:bg-white text-sm outline-none cursor-pointer transition-colors">
+                        <option value="text" ${field.field_type === 'text' ? 'selected' : ''}>Text</option>
+                        <option value="email" ${field.field_type === 'email' ? 'selected' : ''}>Email</option>
+                        <option value="date" ${field.field_type === 'date' ? 'selected' : ''}>Datum</option>
+                        <option value="number" ${field.field_type === 'number' ? 'selected' : ''}>Zahl</option>
+                    </select>
+                </td>
+                <td class="px-4 py-2 align-middle">
+                    <div class="relative group/tooltip">
+                        <select onchange="updateField(${index}, 'width', this.value)" class="w-32 px-2 py-1.5 border border-transparent hover:border-slate-200 focus:border-primary-500 rounded bg-transparent focus:bg-white text-sm outline-none cursor-pointer text-slate-500 transition-colors" title="Steuert die Breite des Feldes im Formular">
+                            <option value="" ${!field.width || field.width === 'w-full' ? 'selected' : ''}>Voll (100%)</option>
+                            <option value="w-1/2" ${field.width === 'w-1/2' ? 'selected' : ''}>Halb (50%)</option>
+                            <option value="w-1/3" ${field.width === 'w-1/3' ? 'selected' : ''}>Drittel (33%)</option>
+                            <option value="w-2/3" ${field.width === 'w-2/3' ? 'selected' : ''}>Zweidrittel (66%)</option>
+                        </select>
+                    </div>
+                </td>
+                <td class="px-4 py-2 align-middle">
+                    <input type="text" value="${field.placeholder || ''}" oninput="updateField(${index}, 'placeholder', this.value)" 
+                        class="w-full px-2 py-1.5 border border-transparent hover:border-slate-200 focus:border-primary-500 rounded bg-transparent focus:bg-white text-sm outline-none text-slate-500 transition-colors" placeholder="Optional">
+                </td>
+                <td class="px-4 py-2 align-middle text-center">
+                    <input type="checkbox" ${field.required ? 'checked' : ''} onchange="updateField(${index}, 'required', this.checked)"
+                        class="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer">
+                </td>
+                <td class="px-4 py-2 align-middle text-right">
+                    <button type="button" onclick="removeField(${index})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Feld löschen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    </button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        // Removed lucide.createIcons() call as we use inline SVGs now
+    }
+
+    function updateField(index, key, value) {
+        fieldsData[index][key] = value;
+    }
+
+    function addNewField() {
+        fieldsData.push({
+            key: "new_field_" + Date.now(),
+            label: "Neues Feld",
+            field_type: "text",
+            required: false,
+            placeholder: "",
+            width: ""
+        });
+        renderTable();
+    }
+
+    function removeField(index) {
+        if (confirm("Feld wirklich löschen?")) {
+            fieldsData.splice(index, 1);
+            renderTable();
+        }
+    }
+
+    function moveField(index, direction) {
+        if (index + direction < 0 || index + direction >= fieldsData.length) return;
+
+        const temp = fieldsData[index];
+        fieldsData[index] = fieldsData[index + direction];
+        fieldsData[index + direction] = temp;
+        renderTable();
+    }
+
+    function resetBSConfig(event) {
+        if (event) event.stopPropagation(); // Prevent detail toggle
+        if (!confirm('Standard-Konfiguration wiederherstellen? Alle Änderungen gehen verloren.')) return;
+
+        fieldsData = [
+            { "key": "name", "label": "Name", "required": true, "field_type": "text", "placeholder": "Firmenname" },
+            { "key": "strasse", "label": "Straße & Hausnr.", "required": false, "field_type": "text", "placeholder": "Musterstr. 1" },
+            { "key": "plz", "label": "PLZ", "required": false, "field_type": "text", "placeholder": "12345", "width": "w-1/3" },
+            { "key": "ort", "label": "Ort", "required": false, "field_type": "text", "placeholder": "Musterstadt", "width": "w-2/3" },
+            { "key": "sachbearbeiter", "label": "Ansprechpartner", "required": false, "field_type": "text", "placeholder": "Optional" },
+            { "key": "email", "label": "E-Mail", "required": false, "field_type": "email", "placeholder": "info@firma.de" }
+        ];
+        renderTable();
+    }
+
+    function prepareSubmit(e) {
+        // Serialize data to hidden input
+        document.getElementById('bs_form_fields').value = JSON.stringify(fieldsData, null, 4);
+        return true;
+    }
+
+    // Initial render
+    document.addEventListener('DOMContentLoaded', renderTable);
+</script>
+{% endblock %}

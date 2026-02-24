@@ -1,0 +1,323 @@
+
+	
+Die IFAS API - Programmversionen und Codebeispiele
+Zurück
+
+
+
+Programmversionen
+Java-Projekt zur IFAS API einrichten
+Laufzeit-Umgebung
+Codebeispiele:
+       - Laden von Vorgängen
+       - Erstellung eines Posteingangs
+       - IFAS-Objekte laden und Status auf 'DMS' setzen
+       - Anlegen einer neuen Anzeige und Laden dieser Anzeige
+       - Anlegen einer neuen Anzeige mitsamt Sonderaktionsdaten
+
+Programmversionen
+06.10.2025 IFAS API 95.904 Download
+- Beim Speichern eines ApiSchreibens findet keine Überprüfung auf Vorhandensein der Datei mehr statt (damit entfällt eine ggf. unterdrückte Swing-Meldung)
+
+09.07.2025 IFAS API 94.909 Download
+- Fehlerkorrektur Schreiben: In wenigen Fällen wurde beim Erstellen eines Schreibens als Verfahrenkennzeichen "IFASAPI" eingetragen. Dieser Fehler ist jetzt behoben, und jetzt wird eine IfasApiExceptions geschmissen falls ein Schreiben ohne gesetztes Verfahrenkennzeichen gespeichert werden sollte.
+
+25.06.2025 IFAS API 94.713 Download
+- Fehlerkorrektur Anzeigen: Wurde eine Anzeige mit einer Sonderaktion gespeichert, diese erneut geladen und die Betriebsstättenzuordnung geändert, so schlug das erneute Speichern fehl aufgrund einer PK-Verletzung
+
+21.05.2025 IFAS API 94.329 Download
+- Fehlerkorrektur Anzeigen: Wurde eine Anzeige ohne Betriebsstättenzuordnung, aber mit Sonderaktion erzeugt, kam es beim Speichern der Sonderaktion in der Oberfläche zu einem Datenbank-Fehler
+
+04.04.2025 IFAS API 93.621 Download
+- Fehlerkorrektur: Das Setzen einer korrekten (existierenden) maNr funktioniert wieder
+
+24.02.2025 IFAS API 92.914 Download
+- Neue Klasse ApiAnzeige zur Erstellung von Anzeigen
+- Neue Klasse ApiBetriebsstaetteSuche zur Suche von Betriebsstätten
+
+28.01.2025 IFAS API 92.618 Download
+- Fehlerkorrektur: Wurde die Methode save() des ApiSbaSchreibens innerhalb eines Unit-Tests aufgerufen, kam es zu einer Assertion-Exception.
+- Neue Klasse ApiSchreibenDb mit einer Methode zum Laden aller Schreiben mit dem Status "DMS", welche zu Posteingängen gehören, die wiederum seit dem übergebenem Zeitpunkt einem Vorgang zugeordnet worden sind
+
+25.04.2024 IFAS API 89.327 Download
+- Anpassung an geänderte Db-Struktur (Wegfall der Spalte baustelle_land in der Tabelle unfall)
+
+14.12.2023 IFAS API 87.323 Download
+- Aktualisierte Version
+
+17.03.2023 IFAS API 83.583 Download
+- Fehlerkorrektur: ApiSchreiben von Tätigkeiten geben jetzt das Aktenzeichen des zugeordneten Vorgangs zurück (auch wenn dies in der DB-Spalte leer ist)
+
+21.10.2022 IFAS API 81.176
+- Korrektur der Klassenabhängigkeiten (Ansprechpartner-Klassen ergänzt)
+
+18.10.2022 IFAS API 81.094
+- Änderungen an der Struktur vom Modul AZ nachgezogen
+
+10.06.2022 IFAS API 79.530
+- Änderungen an der Struktur vom Modul STRL nachgezogen
+
+07.01.2021 IFAS API 71.989 ifasapi71989.zip
+- Änderungen an der Struktur im Bereich Produktsicherheit nachgezogen
+
+08.05.2020 IFAS API 67.962 ifasapi67962.zip
+- Fehlerkorrektur: Im Objekt ApiKSchgVorgang ist es möglich einen Hautpvorgang zu laden. Dieses Objekt enthält nur leere Felder, aber es ist möglich Schreiben hierzu anzulegen
+- Änderung der Klasse ApiPsVorgang: Die ProduktId ist kein int mehr, sondern ein String
+
+17.04.2020 IFAS API 67.600 ifasapi67600.zip
+- Fehlerkorrektur: Die Methode isExists() aus ApiKschGVorgang gibt nur dann true zurück, wenn das Aktenzeichen ein existierendes Vorgang- oder Untervorgangaktenzeichen ist (bei Vorgängen gibt isHauptVorgang() true zurück, sonst false). Bei nicht existierenden oder leerem Aktenzeichen ist isExists() immer false.
+- Fehlerkorrektur: In der Klasse ApiSpsVorgang findet kein Puffern der Daten mehr statt, d.h. wurde ein SpsVorgang extern geändert und erneut geladen, sind auch die aktuellen Änderungen enthalten
+- Der DB-Buffer ist komplett deaktiviert für die IFAS API
+
+16.04.2020 IFAS API 67.554 ifasapi67544.zip
+- Fehlerkorrektur: Die Methode isExists() aus ApiKschGVorgang gibt nur dann true zurück, wenn das Aktenzeichen ein existierendes Vorgang- oder Untervorgangaktenzeichen ist (bei Vorgängen gibt isHauptVorgang() true zurück, sonst false). Bei nicht existierenden oder leerem Aktenzeichen ist isExists() immer false.
+
+20.03.2020 IFAS API 67.099 ifasapi67099.zip
+
+- Fehlerkorrektur: Die Methode isExists() in der Klasse ApiSBAKontrolldaten hat immer true zurück gegeben, auch wenn zu dem Aktenzeichen kein Objekt aus der DB geladen werden konnte. Dieser Fehler ist nun korrigiert.
+
+25.02.2020 IFAS API 66.597 ifasapi66597.zip
+
+- Neue Methode isDeleted bei den Objekten: Diese Methode gibt true zurück, wenn das Objekt gelöscht wurde. Es kann aber dann auf alle Felder normal zugegriffen werden. Funktioniert in dieser Version erstmal nur bei Tätigkeiten und Vorgängen, bei den anderen Objeken wird nie true zurück gegeben.
+
+17.02.2020 IFAS API 66.430 ifasapi66430.zip
+
+- Probleme beim Laden von SPS-Vorgängen behoben
+
+12.06.2019 IFAS API 62.682 ifasapi62682.zip
+
+- notwendige Anpassungen wg. Änderungen im Modul Produktsicherheit
+
+11.03.2019 IFAS API 61.410 ifasapi61410.zip
+
+- Unterstützung für das Modul SPS
+
+20.02.2019 IFAS API 61.038 ifasapi61038.zip
+
+- Das Verfahrenkennzeichen zu einem Schreiben zu einer Betriebsstätteneinheit muss abhängig vom Modul manuell festgelegt werden (im Moment entweder "IFAS" oder "STRL")
+
+12.02.2019 IFAS API 60.859 ifasapi60859.zip
+
+- Zu einem ApiSchreiben lässt sich das Poststück-Aktenzeichen abrufen
+
+30.01.2019 IFAS API 60.610 ifasapi60610.zip
+
+- Fehler bei den SBA-Klassen behoben
+
+08.01.2019 IFAS API 60.144 ifasapi60144.zip
+
+- bsNr von Schreiben wird an allen Stellen gesetzt
+- Zu einem Schreiben von Betriebsstätten kann das Verfahren-Kennzeichen gesetzt werden.
+
+04.01.2019 IFAS API 60.095 ifasapi60095.zip
+
+- Zu einem Schreiben können die Felder Behörde-Akz und Post-Aktenzeichen gesetzt und in der DB gespeichert werden.
+
+04.12.2018 IFAS API 59.682 ifasapi59682.zip
+
+- Unterstützung für das Modul Arbeitszeit
+
+05.09.2018 IFAS API 58.368
+
+- Der Status der Objekte ApiVorgang und ApiTätigkeit läßt sich auf übertragen setzen (verändert nur den Vorgang bzw. Tätigkeit, nicht aber die angehängten Objekte wie Schreiben,..)
+
+27.08.2018 IFAS API 58.209
+
+- Fehlerkorrektur: Beim Drucken einer Tätigkeit konnte es zu einem Fehler NoClassDefFoundError kommen
+
+06.08.2018 IFAS API 57.926
+
+- Druck von PDF-Übersichtsdateien von Beschwerden, Unfällen, Tätigkeiten und Vorgängen. Die erstellten Übersichtsdateien sind temporäre Dateien im $TEXTE-Verzeichnis und müssen an einen anderen Ort kopiert werden: temp. Dateien werden spätestens bei Programmende gelöscht.
+- Tätigkeiten können auf abgeschlossen gesetzt werden
+
+Java-Projekt zur IFAS API einrichten
+Zur Nutzung der IFAS API kann eine bel. IDE genutzt werden (z.B. Elcipse, IntelliJ oder mit Abstrichen auch VS Code). Als genutzte JRE muss ein Java 11 oder höher eingesetzt werden, im Idealfall die auf unseren Downloadseiten veröffentlichte. Die Abhängigkeit zu Dritt-Bibliotheken ist gering, außer log4j werdeb keine weiteren Abhängigkeiten benötigt (und duse auch erst zur Laufzeit):
+ifas-api.jar
+log4j-core-2.22.1.jar Muss zur Laufzeit im Klassenpfad vorhanden sein
+log4j-api-2.22.1.jar Muss zur Laufzeit im Klassenpfad vorhanden sein
+ifas-api-doc.jar: Diese jar ist optional, sollte aber dazu gebunden werden um die Javadoc-Kommentare zur API zu erhalten
+
+Laufzeit-Umgebung
+Die Anwendung muss in einer minimalen IFAS-Umgebung gestartet werden: Hierbei handelt es sich um eine sehr stark abgespeckte IFAS-Umgebung, in der normalerweise die IFAS-Module gestartet werden.
+standard.cnf Diese Datei enthält einige cnf-Variablen die sich von der "normalen" IFAS-Umgebung unterscheiden und müssen hier gesetzt werden. Sobald eine DB-Verbindung besteht werden weitere cnf-Variablen aus der DB geladen, dies hat den Vorteil dass bei Konfigurationsänderungen diese die API gleich mit übernimmt. Falls nötig können in der standard.cnf weitere Variablen überschrieben werden (d.h. diese werden dann anstelle der in der DB genutzt)
+#DB-Verbindung in der ndat.dft
+DBNAME=IFAS
+
+#Pfad zu temporären Verzeichnis
+TEXTE=D:\tmp\ifasapi\texte
+
+#Optional: Logging aktivieren
+#LOG4J=$TEXTE\log4j\log4j.log
+#LOG4JCLASSES=de.kisters.ifas=DEBUG
+#LOG4J_MAXFILESIZE=256MB
+nat.dft Die Datei kann 1:1 aus der ifas-Umgebung übernommen werden und enthält die Details zur DB-Verbindung. Hier können auch mehrere DB-Verbindungen konfiguriert werden, z.B. die Verbindung zur Produktiv- und Test-Datenbank. Die genutzte Verbdindung kann dann in der standard.cnf umgeschaltet werden (z.B. DBNAME=IFAS-Test anstelle DBBNAME=IFAS). Hier ein Beispieleintrag:
+[IFAS]
+DATABASE_DRIVER=com.microsoft.sqlserver.jdbc.SQLServerDriver
+DATABASE_CONNECT=jdbc:sqlserver://sqlserver.kisters.de;databaseName=IFAS;integratedSecurity=false;encrypt=true;trustServerCertificate=true;
+UID=ifas
+PWD=geheimesPasswort
+rmi_trace_port=1099
+stack_trace_classes=de.kisters.tools, de.kisters.ifas
+dbtrace=texte\Ndat-Debug\DBNAME\APPLNAME\APPLNAME-LFDNR.dbg
+Unterverzeichnis jar mit folgenden Verzeichhnissen (kann aus der ifas-Umgebung kopiert werden
+log4j-2.22.1 (Auch wenn das Logging deaktiviert ist müssen die Dateien vorhanden sein)
+jdbcdrivers (Das Unterverezichnis enthält die einzelnen jar-Dateien für die verschiedenen DB-Systeme)
+texte Dieses Verzeichnis wird automatisch von der IFAS API angelegt und enthält temporär angelegte Dateien.
+
+Codebeispiele
+Einige Codebeispiele zu den Möglichkeiten der IFAS API:
+
+Codebeispiel 1: Laden von Vorgängen
+//Initialisieren der API, dieser Schritt muss immer zuerst durchgeführt werden
+IfasApiTools.init();
+
+// Liste aller erstellten o. veränderten Vorgänge seit dem 1.1.2018 laden und das jeweilige Aktenzeichen ausgeben
+VorgangChangeLog beschwerdeChangeLog = new VorgangChangeLog();
+List     changeList          = beschwerdeChangeLog.getChanges(1514809232);
+for (Change change : changeList)
+{
+    System.out.println("Aktenzeichen: " + ((ApiVorgang) change.getApiObjekt()).getVorgangszeichen());
+}
+
+//Zu einem Akz einen Vorgang laden und von diesem ein Übersichts-PDF erstellen
+ApiVorgang apiVorgang = new ApiVorgang("Vg. 50/2017-DU");
+String path = apiVorgang.printVorgang();
+System.out.println("Erstellte PDF-Übersichtsdatei: " + path);
+
+//DB-Verbindungen schließen
+IfasApiTools.close();
+ 
+
+Codebeispiel 2: Erstellung eines Posteingangs
+//Initialisieren der API, dieser Schritt muss immer zuerst durchgeführt werden
+IfasApiTools.init();
+
+// Einen Posteingang erstellen
+ApiPost apiPost = new ApiPost();
+apiPost.setDate(new Date());
+apiPost.setBetreff("Die Post erhält einen Betreff");
+apiPost.dbInsert();
+
+//DB-Verbindungen schließen
+IfasApiTools.close();
+
+
+Codebeispiel 3: IFAS-Objekte laden und Status auf "DMS" setzen
+ //Initialisieren der API, dieser Schritt muss immer zuerst durchgeführt werden
+IfasApiTools.init();
+
+ApiTaetigkeit apiTaetigkeit = new ApiTaetigkeit("OS 000000031");
+apiTaetigkeit.setAbgeschlossen();
+
+ApiVorgang apiVorgang = new ApiVorgang("Vg. 50/2017-DU");
+apiVorgang.setStatusDmsUebertragen();
+
+//DB-Verbindungen schließen
+IfasApiTools.close();
+
+Codebeispiel 4: Anlegen einer neuen Anzeige und Laden dieser Anzeige
+Die hier gesetzten Werte lassen sich nicht 1:1 übernehmen und werden zu Exceptions beim Abspeichern führen. So müssen die Werte Art, Status, ZusatzArt an die eigenen Kataloge angepasst werden, näheres hierzu im Javadoc der einzelnen Methoden.
+ //Initialisieren der API, dieser Schritt muss immer zuerst durchgeführt werden
+IfasApiTools.init();
+
+//Betriebsstätte mit Namen Kampmann suchen
+ApiBetriebsstaetteSuche apiBetriebsstaetteSuche = new ApiBetriebsstaetteSuche();
+List apiBetriebsstaetteListe = apiBetriebsstaetteSuche.sucheBs("Kampmann", null, null, null);
+if (apiBetriebsstaetteListe == null)
+    return;
+//Anzeige erstellen
+ApiAnzeige apiAnzeige = new ApiAnzeige();
+apiAnzeige.setAnmerkung("Anmerkung");
+apiAnzeige.setBemerkungsText("Bemerkung");
+apiAnzeige.setArt("Asbest");
+apiAnzeige.setStatus("Entwurf");
+apiAnzeige.setZusatzArt("Asbest-Beschwerde");
+apiAnzeige.setStoffName("Zement");
+apiAnzeige.setDate(new Date());
+apiAnzeige.setMaNr("DU jpos");
+apiAnzeige.setBsNr(apiBetriebsstaetteListe.get(0).getBsNummer());
+
+//Weitere Betriebsstätte suchen und der Anzeige zuordnen
+List apiBetriebsstaetteListe2 = apiBetriebsstaetteSuche.sucheBs("Griemelbach", null, null, null);
+if (apiBetriebsstaetteListe2 != null)
+    apiAnzeige.setZugeordneteBsNr(apiBetriebsstaetteListe2.get(0).getBsNummer());
+apiAnzeige.setZeitraumBis(new Date());
+apiAnzeige.setZeitraumVon(new Date());
+apiAnzeige.setKontrolleAm(new Date());
+apiAnzeige.setDateFrist(new Date());
+apiAnzeige.setDateZulassung(new Date());
+
+//Betriebsstätte wurde noch nicht gespeichert
+if (!apiAnzeige.isExists())
+    System.out.println("Anzeige noch nicht gespeichert");
+if (apiAnzeige.save())
+{
+    System.out.println("Speichern erfolgreich " + apiAnzeige.getAkz());
+    //Anzeige wieder über das Aktenzeichen laden
+    ApiAnzeige apiAnzeigeDb = new ApiAnzeige(apiAnzeige.getAkz());
+    System.out.println(apiAnzeigeDb);
+}
+
+//DB-Verbindungen schließen
+IfasApiTools.close();
+
+Codebeispiel 5: Anlegen einer neuen Anzeige mitsamt Sonderaktionsdaten
+Die hier gesetzten Werte lassen sich nicht 1:1 übernehmen und werden zu Exceptions beim Abspeichern führen. So müssen die Werte Art, Status, ZusatzArt an die eigenen Kataloge angepasst werden, näheres hierzu im Javadoc der einzelnen Methoden.
+
+In diesem Beispiel wird eine Anzeige mit der Zusatzart "Sonderaktion SX_TAB_03" erzeugt. Der entsprechende Katalogeintrag hat den Sonderaktionen-Katalog "SX_TAB_03" zugeordnet und ist vom Typ "SxTab": 
+
+Damit jetzt in der API zu einer Zeile in diesem Sonderaktionen-Katalog ein Wert zugewiesen werden kann müssen diese eindeutige Schlüsselworte erhalten. Diese werden in Spalte FMS-Schlüssel eingetragen und sind frei wählbar: 
+
+Diese Schlüsselworte werden im unteren Codebeispiel genutzt. Bei Zahlen- und Texteingaben können hier die Werte direkt reingeschrieben werden, bei den anderen Antwortarten müssen direkt die DB-Werte eingegeben werden. Checkboxen z.B. sind von links nach rechts durchnummeriert, soll jetzt die erste und dritte Checkbox selektiert sein muss der Wert "0;3" als Wert übergeben werden.
+//Initialisieren der API, dieser Schritt muss immer zuerst durchgeführt werden
+IfasApiTools.init();
+
+ApiBetriebsstaetteSuche apiBetriebsstaetteSuche = new ApiBetriebsstaetteSuche();
+List apiBetriebsstaetteListe = apiBetriebsstaetteSuche.sucheBs("Kampmann", null, null, null);
+
+ApiAnzeige apiAnzeige2 = new ApiAnzeige();
+apiAnzeige2.setAnmerkung("Anmerkung");
+apiAnzeige2.setBemerkungsText("Bemerkung");
+apiAnzeige2.setArt("Sonderaktion SX_TAB_03");
+apiAnzeige2.setStatus("Entwurf");
+apiAnzeige2.setDate(new Date());
+apiAnzeige2.setMaNr("DU jpos");
+apiAnzeige2.setBsNr(apiBetriebsstaetteListe.get(0).getBsNummer());
+
+apiAnzeige.setBsStrasse("Arnold-Dehnen-Strasse 47");
+apiAnzeige.setBsPlz("47138");
+apiAnzeige.setBsOrt("Duisburg");
+apiAnzeige.setBsLand("D");
+
+apiAnzeige2.setZeitraumBis(new Date());
+apiAnzeige2.setZeitraumVon(new Date());
+apiAnzeige2.setKontrolleAm(new Date());
+
+//Einige Werte der Sonderaktion füllen
+apiAnzeige2.addSonderaktionValue("10", "u20m");
+apiAnzeige2.addSonderaktionValue("110", "u20w");
+apiAnzeige2.addSonderaktionValue("50", "u29m");
+apiAnzeige2.addSonderaktionValue("30", "u29w");
+
+if (apiAnzeige2.save())
+	System.out.println("Speichern erfolgreich " + apiAnzeige2.getAkz());
+        
+ApiAnzeige apiAnzeigeDb = new ApiAnzeige(apiAnzeige2.getAkz());
+System.out.println(apiAnzeigeDb);
+apiAnzeigeDb.addSonderaktionValue("11", "u20m");
+apiAnzeigeDb.addSonderaktionValue("112", "u20w");
+apiAnzeigeDb.addSonderaktionValue("56", "u29m");
+apiAnzeigeDb.addSonderaktionValue("37", "u29w");
+if (apiAnzeigeDb.save())
+{
+    ApiAnzeige apiAnzeigeDb2 = new ApiAnzeige(apiAnzeigeDb.getAkz()); 
+    List apiSonderaktionValueListe= apiAnzeigeDb2.getSonderaktionValues();
+    for (ApiSonderaktionValue apiSonderaktionValue : apiSonderaktionValueListe)
+    {
+        System.out.println(apiSonderaktionValue.getControlId() + " " + apiSonderaktionValue.getValue());
+    }
+}
+
+//DB-Verbindungen schließen
+IfasApiTools.close();
+Zurück

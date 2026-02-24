@@ -1,0 +1,27 @@
+# IFAS-Assistent - Python Dependencies
+# Installation: pip install -r requirements.txt
+
+# Flask Web Framework
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-APScheduler==1.12.4
+
+# Password Hashing
+Werkzeug>=3.0.0
+
+# PDF Processing
+PyMuPDF==1.23.7
+
+# Office Document Processing
+python-docx>=0.8.11
+odfpy>=1.4.1
+
+# Email Processing
+extract-msg>=0.45.0
+
+# HTTP Client (for LMStudio and IFAS API)
+requests>=2.31.0
+
+# Optional: File watching (for folder monitor background service)
+watchdog>=3.0.0

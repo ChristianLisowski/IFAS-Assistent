@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFAS-API & IFAS-Assist | Masterplan 2026</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #475569;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+        }
+
+        /* --- Navigation --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #0f172a;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .brand i { color: var(--primary); }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(37, 99, 235, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-section-title {
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            margin-top: 1rem;
+            padding-left: 1rem;
+            font-weight: 600;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 3rem 4rem;
+            max-width: 1600px;
+        }
+
+        /* --- Components --- */
+        .header-section {
+            margin-bottom: 4rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 2rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .badge-api { background: #dbeafe; color: var(--primary-dark); }
+        .badge-assist { background: #fef3c7; color: #92400e; }
+        .badge-status { background: #dcfce7; color: #166534; }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 4rem 0 1.5rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem 0;
+            color: var(--secondary);
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem 0;
+            color: var(--text-main);
+        }
+
+        p { margin-bottom: 1.25rem; color: var(--secondary); max-width: 80ch; }
+
+        /* --- Cards & Grid --- */
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+
+        .card-api { border-left: 4px solid var(--primary); }
+        .card-assist { border-left: 4px solid var(--accent-warning); }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .stat-desc { font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem; line-height: 1.4; }
+
+        /* --- Workflow Visual --- */
+        .workflow-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .workflow-step i {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .workflow-step p {
+            margin: 0.5rem 0 0.25rem 0;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .workflow-step small {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .workflow-arrow {
+            color: #cbd5e1;
+            font-size: 1.5rem;
+        }
+
+        /* --- Timeline --- */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -2.4rem;
+            width: 1rem;
+            height: 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            top: 0.25rem;
+        }
+
+        .timeline-dot.milestone {
+            background: var(--primary);
+            width: 1.25rem;
+            height: 1.25rem;
+            left: -2.5rem;
+        }
+
+        .timeline-date {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        /* --- Code & Tables --- */
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            margin: 1.5rem 0;
+            border: 1px solid #334155;
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            color: #ec4899;
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        pre code { color: inherit; background: transparent; padding: 0; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 2rem 0;
+        }
+
+        th {
+            background: #f1f5f9;
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafbfc; }
+
+        /* --- Features & Alerts --- */
+        .feature-box {
+            background: linear-gradient(to right bottom, #ffffff, #f8fafc);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .feature-box h4 {
+            margin-top: 0;
+        }
+
+        .feature-box ul {
+            margin: 1rem 0 0 1.5rem;
+        }
+
+        .feature-box li {
+            margin: 0.5rem 0;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .alert i {
+            font-size: 1.25rem;
+            margin-top: 0.125rem;
+        }
+
+        .alert-info { background: #eff6ff; border-left: 4px solid var(--primary); color: #1e40af; }
+        .alert-warning { background: #fffbeb; border-left: 4px solid var(--accent-warning); color: #92400e; }
+        .alert-danger { background: #fef2f2; border-left: 4px solid var(--accent-danger); color: #991b1b; }
+        .alert-success { background: #f0fdf4; border-left: 4px solid var(--accent-success); color: #166534; }
+
+        /* --- Method Badges --- */
+        .method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            min-width: 60px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .get { background: #10b981; }
+        .post { background: #3b82f6; }
+        .put { background: #f59e0b; }
+        .delete { background: #ef4444; }
+
+        /* --- Endpoint Cards --- */
+        .endpoint-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin: 2rem 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .endpoint-card.priority-high {
+            border-left: 4px solid var(--accent-danger);
+        }
+
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .endpoint-tag {
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        /* --- Lists --- */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.75rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            color: var(--secondary);
+        }
+
+        ul.checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul.checklist li {
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        ul.checklist li::before {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            color: var(--accent-success);
+        }
+
+        /* --- Phase Cards --- */
+        .phase-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .phase-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .phase-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+        }
+
+        .phase-card.future {
+            opacity: 0.7;
+        }
+
+        .phase-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .phase-card.future .phase-number {
+            background: #94a3b8;
+        }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: 5rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* --- Scroll to Top --- */
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .scroll-top.visible {
+            display: flex;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar { width: 80px; padding: 2rem 1rem; }
+            .brand span, .nav-links a span, .nav-section-title { display: none; }
+            .brand { justify-content: center; }
+            .nav-links a { justify-content: center; padding: 1rem; }
+            .main-content { margin-left: 80px; padding: 2rem; }
+            .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+            .phase-container { grid-template-columns: 1fr; }
+            .workflow-container { flex-direction: column; }
+            .workflow-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+        <a href="#" class="brand">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>IFAS API / Assist</span>
+        </a>
+        
+        <div class="nav-links">
+            <div class="nav-section-title">Übersicht</div>
+            <a href="#dashboard" class="active"><i class="fa-solid fa-chart-line"></i> <span>Dashboard & ROI</span></a>
+            <a href="#vision"><i class="fa-solid fa-lightbulb"></i> <span>Vision & Problem</span></a>
+            <a href="#workflow"><i class="fa-solid fa-arrow-right-arrow-left"></i> <span>Prozess & Workflow</span></a>
+            
+            <div class="nav-section-title">Phase 1: IFAS-API</div>
+            <a href="#api-overview"><i class="fa-solid fa-plug"></i> <span>API Übersicht</span></a>
+            <a href="#api-routing"><i class="fa-solid fa-route"></i> <span>Smart Routing</span></a>
+            <a href="#api-endpoints"><i class="fa-solid fa-code"></i> <span>Endpunkte (Detail)</span></a>
+            <a href="#api-tech"><i class="fa-solid fa-server"></i> <span>Tech & Security</span></a>
+            
+            <div class="nav-section-title">Phase 2: IFAS-Assist</div>
+            <a href="#assist-overview"><i class="fa-solid fa-robot"></i> <span>Assistent Konzept</span></a>
+            <a href="#assist-features"><i class="fa-solid fa-brain"></i> <span>KI-Features</span></a>
+
+            <div class="nav-section-title">Beauftragung</div>
+            <a href="#contract"><i class="fa-solid fa-file-contract"></i> <span>Vertragsumfang</span></a>
+            <a href="#timeline"><i class="fa-regular fa-calendar-check"></i> <span>Zeitplan & Kosten</span></a>
+            <a href="#team"><i class="fa-solid fa-users"></i> <span>Team & Rollen</span></a>
+            <a href="#deliverables"><i class="fa-solid fa-box-archive"></i> <span>Lieferumfang</span></a>
+            
+            <div class="nav-section-title">Anhang</div>
+            <a href="#open-questions"><i class="fa-solid fa-circle-question"></i> <span>Offene Fragen</span></a>
+            <a href="#risks"><i class="fa-solid fa-triangle-exclamation"></i> <span>Risiken & Mitigation</span></a>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- HEADER -->
+        <section id="dashboard" class="header-section">
+            <div class="badge badge-api">Phase 1: IFAS-API</div>
+            <div class="badge badge-assist">Phase 2: IFAS-Assist</div>
+            <div class="badge badge-status">Status: Beauftragungsreif</div>
+            <h1>IFAS Digitalisierungsinitiative 2026</h1>
+            <p style="max-width: none; font-size: 1.05rem;">Masterplan zur intelligenten Automatisierung der Arbeitsschutzverwaltung im Landesamt für Arbeitsschutz, Soziales und Gesundheit (LASG) Schleswig-Holstein. Von manueller Erfassung zur KI-gestützten Verarbeitung in zwei Phasen.</p>
+        </section>
+
+        <!-- ROI & STATS DASHBOARD -->
+        <section class="grid-4">
+            <div class="card">
+                <div class="stat-value">80%</div>
+                <div class="stat-label">Zeitersparnis</div>
+                <div class="stat-desc">Von 12 Minuten auf <2 Minuten pro Anzeige (Durchschnitt)</div>
+            </div>
+            <div class="card">
+                <div class="stat-value">~19.600</div>
+                <div class="stat-label">Pilot-Vorgänge</div>
+                <div class="stat-desc">4 Anzeigenarten im ersten Jahr (75% aller Eingänge)</div>
+            </div>
+            <div class="card">
+                <div class="stat-value">2287h</div>
+                <div class="stat-label">Ersparnis/Jahr</div>
+                <div class="stat-desc">Entspricht 70.890 € pro Jahr oder ca 1.5 VZÄ</div>
+            </div>
+            <div class="card">
+                <div class="stat-value">&lt; 1 Jahr</div>
+                <div class="stat-label">ROI</div>
+                <div class="stat-desc">Amortisation innerhalb von 12 Monaten nach Go-Live</div>
+            </div>
+        </section>
+
+        <!-- VISION & PROBLEM -->
+        <h2 id="vision">1. Vision & Problemstellung</h2>
+
+        <h3>Das Problem: Manuelle Erfassung (IST-Zustand)</h3>
+
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div>
+                <strong>Ineffizienter Prozess belastet Ressourcen</strong><br>
+                Täglich gehen verschiedenste Meldungen per E-Mail und Post ein. Anzeigen wie Mutterschutzmeldungen oder Pyroanzeigen werden dabei überwiegend manuell erfasst: Dokument öffnen → Betrieb suchen → Daten abtippen → Zuordnen → Speichern. <strong>5-15 Minuten</strong> pro Fall. Bei 19.600 Anzeigen/Jahr = <strong>2.287 Arbeitsstunden</strong> verschwendet für reine Dateneingabe.
+            </div>
+        </div>
+
+        <div class="card" style="background: #fafbfc;">
+            <h4>Typische Probleme beim manuellen Prozess:</h4>
+            <ul>
+                <li> <strong>Zeitaufwendig:</strong> 5-15 Min pro Anzeige</li>
+                <li> <strong>Fehleranfällig:</strong> Tippfehler, falsche Zuordnungen, inkonsistente Erfassung</li>
+                <li> <strong>Nicht skalierbar:</strong> Bei steigenden Fallzahlen müsste Personal aufgestockt werden</li>
+                <li> <strong>Keine Datenqualität:</strong> Unterschiedliche Erfassungsstandards je nach Sachbearbeiter</li>
+                <li> <strong>Verzögerungen:</strong> Posteingänge bleiben liegen, falsche Weiterleitung</li>
+            </ul>
+        </div>
+
+        <h3>Die Vision: Arbeitsschutz 4.0</h3>
+
+        <div class="alert alert-success">
+            <i class="fa-solid fa-rocket"></i>
+            <div>
+                <strong>Vom Posteingang zur Anzeige in unter 2 Minuten</strong><br>
+                Das LASG digitalisiert die Arbeitsschutzverwaltung durch Künstliche Intelligenz. Eingehende Meldungen – von Mutterschutz über Pyrotechnik bis Sprengarbeiten – werden automatisch verarbeitet, kategorisiert und den zuständigen Sachbearbeitern zugeordnet. <strong>Ergebnis:</strong> 60-80% Zeitersparnis, höhere Datenqualität, schnellere Bearbeitung.
+            </div>
+        </div>
+
+        <!-- 2-PHASEN MODELL -->
+        <h3>Die Lösung: 2-Phasen-Ansatz</h3>
+
+        <div class="phase-container">
+            <div class="phase-card active card-api">
+                <div class="phase-number">1</div>
+                <div class="badge badge-api">IFAS-API | Phase 1</div>
+                <h3 style="margin-top: 0.5rem;">REST-API Entwicklung</h3>
+                <p><strong>Auftragnehmer:</strong> Kisters AG</p>
+                <p><strong>Zeitraum:</strong> KW 2-16/2026 (14 Wochen)</p>
+                <p><strong>Budget:</strong> 85-140k € (geschätzt)</p>
+                
+                <h4>Lieferumfang:</h4>
+                <ul class="checklist" style="font-size: 0.9rem;">
+                    <li>Arbeitskorb-Zugriff (Read/Write)</li>
+                    <li>Intelligentes Sachbearbeiter-Routing</li>
+                    <li>Anzeigen-Management (CRUD + Schreiben)</li>
+                    <li>Betriebsstätten-Suche (Fuzzy-Matching)</li>
+                    <li>Sicherheit (JWT, TLS 1.3, IP-Whitelist)</li>
+                </ul>
+                
+                <p style="margin-top: 1rem;"><strong>Ergebnis:</strong> Produktionsreife API als Fundament für Phase 2</p>
+            </div>
+
+            <div class="phase-card future card-assist">
+                <div class="phase-number">2</div>
+                <div class="badge badge-assist">IFAS-Assist | Phase 2</div>
+                <h3 style="margin-top: 0.5rem;">KI-Assistent Entwicklung</h3>
+                <p><strong>Auftragnehmer:</strong> LASG SB 403 IT (intern)</p>
+                <p><strong>Zeitraum:</strong> Q2-Q3/2026</p>
+                <p><strong>Budget:</strong> Intern (Personalkapazität)</p>
+                
+                <h4>Lieferumfang:</h4>
+                <ul class="checklist" style="font-size: 0.9rem;">
+                    <li>KI-Datenextraktion aus PDF/E-Mail</li>
+                    <li>Automatische Kategorisierung</li>
+                    <li>Web-Benutzeroberfläche</li>
+                    <li>"Mensch-in-der-Schleife" Validierung</li>
+                    <li>Workflow-Automatisierung</li>
+                </ul>
+                
+                <p style="margin-top: 1rem;"><strong>Ergebnis:</strong> Vollautomatischer Erfassungsprozess</p>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+                <strong>Warum 2 Phasen?</strong><br>
+                <strong>Phase 1 (IFAS-API):</strong> Das technische Fundament muss stabil und sicher von einem erfahrenen Anbieter (Kisters AG) entwickelt werden.<br>
+                <strong>Phase 2 (IFAS-Assist):</strong> Der Assistent wird intern entwickelt, sobald die API steht. Dies ermöglicht maximale Flexibilität bei der KI-Integration.
+            </div>
+        </div>
+
+        <!-- WORKFLOW -->
+        <h2 id="workflow">2. Der SOLL-Workflow</h2>
+
+        <div class="card" style="background: linear-gradient(to bottom, #ffffff, #fafbfc);">
+            <h3>Vom Posteingang zur Anzeige in 5 Schritten</h3>
+            
+            <div class="workflow-container">
+                <div class="workflow-step">
+                    <i class="fa-solid fa-envelope-open" style="color: #64748b;"></i>
+                    <p>1. Posteingang</p>
+                    <small>Dokument im IFAS-Arbeitskorb</small>
+                </div>
+                
+                <i class="fa-solid fa-arrow-right workflow-arrow"></i>
+                
+                <div class="workflow-step">
+                    <i class="fa-solid fa-download" style="color: var(--primary);"></i>
+                    <p>2. API-Abruf</p>
+                    <small>REST-API holt Posteingang</small>
+                </div>
+                
+                <i class="fa-solid fa-arrow-right workflow-arrow"></i>
+                
+                <div class="workflow-step">
+                    <i class="fa-solid fa-brain" style="color: #8b5cf6;"></i>
+                    <p>3. KI-Analyse</p>
+                    <small>Datenextraktion & Betriebssuche</small>
+                </div>
+                
+                <i class="fa-solid fa-arrow-right workflow-arrow"></i>
+                
+                <div class="workflow-step">
+                    <i class="fa-solid fa-user-check" style="color: var(--accent-success);"></i>
+                    <p>4. Validierung</p>
+                    <small>Sachbearbeiter prüft (30-60s)</small>
+                </div>
+                
+                <i class="fa-solid fa-arrow-right workflow-arrow"></i>
+                
+                <div class="workflow-step">
+                    <i class="fa-solid fa-check-double" style="color: var(--primary-dark);"></i>
+                    <p>5. Erfassung</p>
+                    <small>Automatisch in IFAS gespeichert</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- PHASE 1: IFAS-API -->
+        <h2 id="api-overview">3. Phase 1: IFAS-API (Beauftragung Kisters AG)</h2>
+
+        <p>Die REST-API ist das technische Fundament. Sie ermöglicht externen Anwendungen (wie dem IFAS-Assist) den standardisierten Zugriff auf IFAS-Daten über HTTP-Endpunkte.</p>
+
+        <div class="grid-2">
+            <div class="card card-api">
+                <h3><i class="fa-solid fa-bullseye"></i> Die 4 Pilotprozesse</h3>
+                <p style="font-size: 0.9rem;">Fokus auf vier häufige, gut strukturierte Anzeigenarten:</p>
+                <table style="font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>Anzeigenart</th>
+                            <th>Vol./Jahr</th>
+                            <th>Prio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Mutterschutz</strong></td>
+                            <td>~11.000</td>
+                            <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                        </tr>
+		     <tr>
+                            <td><strong>Unfallanzeigen</strong></td>
+                            <td>~7.500</td>
+                            <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                        </tr>
+                        <tr>
+                            <td>Pyrotechnik (Feuerwerk)</td>
+                            <td>~1000</td>
+                            <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                        </tr>
+                        <tr>
+                            <td>Sonn- & Feiertagsarbeit</td>
+                            <td>~350</td>
+                            <td>MITTEL</td>
+                        </tr>
+		   <tr>
+                            <td>Bauvoranzeigen</td>
+                            <td>~150</td>
+                            <td>NIEDRIG</td>
+                        </tr>
+                        <tr style="background: #f8fafc; font-weight: 600;">
+                            <td>GESAMT</td>
+                            <td>~20.000</td>
+                            <td>ca. 75% aller Anzeigen</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card card-api">
+                <h3><i class="fa-solid fa-layer-group"></i> Technologie-Stack</h3>
+                <p style="font-size: 0.9rem;">Empfohlene Technologien (finale Entscheidung im Kick-off):</p>
+                <table style="font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th>Komponente</th>
+                            <th>Technologie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>API-Framework</td>
+                            <td>Spring Boot / FastAPI*</td>
+                        </tr>
+                        <tr>
+                            <td>Datenzugriff</td>
+                            <td>IFAS Java-API (bestehend)</td>
+                        </tr>
+                        <tr>
+                            <td>Authentifizierung</td>
+                            <td>JWT (JSON Web Tokens)</td>
+                        </tr>
+                        <tr>
+                            <td>Deployment</td>
+                            <td>Docker Container</td>
+                        </tr>
+                        <tr>
+                            <td>Protokoll</td>
+                            <td>HTTPS / TLS 1.3</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0;">* Empfehlung LASG: Technologieoffen, Hauptsache modern und wartbar</p>
+            </div>
+        </div>
+
+        <!-- SMART ROUTING -->
+        <h2 id="api-routing">4. Intelligentes Sachbearbeiter-Routing</h2>
+
+        <div class="alert alert-info">
+            <i class="fa-solid fa-route"></i>
+            <div>
+                <strong>Suchfunktion über IFAS-API</strong><br>
+                Mittels API soll automatisch den zuständigen Sachbearbeiter basierend auf der Betriebsstätte ermittelt werden. Kein manuelles Routing mehr – der Posteingang landet direkt beim richtigen Kollegen oder wird an die Abteilungsleitung weitergeleitet, wenn kein Zuständiger hinterlegt ist.
+            </div>
+        </div>
+
+        <h3>Der 3-Stufen-Routing-Prozess</h3>
+
+        <div class="feature-box">
+            <h4>Stufe 1: Betriebsstätten-Suche (Fuzzy Matching)</h4>
+            <p>API durchsucht IFAS nach Name, PLZ, Ort. Selbst bei Tippfehlern oder unvollständigen Angaben findet das System den richtigen Betrieb mit einem Confidence-Score.</p>
+            <pre><code>GET /betriebsstaetten/search?name=RSA%20Testbetrieb&plz=22880
+
+→ Response: {
+    "betriebsstaetten_id": "BS-123456",
+    "name": "RSA Testbetrieb GmbH",
+    "match_score": 0.95  // 95% Übereinstimmung
+}</code></pre>
+        </div>
+
+        <div class="feature-box">
+            <h4>Stufe 2: Zuständigkeits-Ermittlung</h4>
+            <p>Falls Betrieb gefunden: API holt den zuständigen Sachbearbeiter aus der IFAS-Datenbank.</p>
+            <pre><code>GET /betriebsstaetten/BS-123456/zustaendiger
+
+→ Response: {
+    "zustaendiger": {
+        "mitarbeiter_id": "MA-98765",
+        "name": "Schmidt, Thomas",
+        "rolle": "Sachbearbeiter Mutterschutz",
+        "email": "thomas.schmidt@lasg.landsh.de"
+    },
+    "vertretung": {...}
+}</code></pre>
+        </div>
+
+        <div class="feature-box">
+            <h4>Stufe 3: Automatische Weiterleitung (3 Modi)</h4>
+            
+            <p><strong>Modus A: Auto nach Betriebszuständigem</strong></p>
+            <pre><code>POST /posteingaenge/{id}/weiterleiten
+{
+  "modus": "auto_betriebszustaendig",
+  "betriebsstaetten_id": "BS-123456"
+}
+
+→ System findet automatisch den Zuständigen</code></pre>
+            
+            <p><strong>Modus B: Auto Fallback (bei unbekanntem Betrieb/Zuständigem)</strong></p>
+            <pre><code>{
+  "modus": "auto_fallback",
+  "grund": "Betrieb nicht in IFAS gefunden"
+}
+
+→ System leitet an Abteilungsleitung weiter</code></pre>
+            
+            <p><strong>Modus C: Manuell (Nutzer wählt Empfänger)</strong></p>
+            <pre><code>{
+  "modus": "manuell",
+  "ziel_mitarbeiter_id": "MA-98765",
+  "nachricht": "Bitte übernehmen"
+}</code></pre>
+        </div>
+
+        <h3>Routing-Szenarien im Überblick</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Situation</th>
+                    <th>System-Aktion</th>
+                    <th>Endpunkt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>✅ Betrieb gefunden + Zuständiger bekannt</td>
+                    <td>Automatische Zuordnung zum Sachbearbeiter</td>
+                    <td><code>GET /betriebsstaetten/{id}/zustaendiger</code></td>
+                </tr>
+                <tr>
+                    <td>⚠️ Betrieb gefunden + Kein Zuständiger</td>
+                    <td>Fallback an Abteilungsleitung</td>
+                    <td><code>GET /mitarbeiter/fallback</code></td>
+                </tr>
+                <tr>
+                    <td>❌ Betrieb nicht gefunden</td>
+                    <td>Manuelle Weiterleitung erforderlich</td>
+                    <td><code>POST /posteingaenge/{id}/weiterleiten</code></td>
+                </tr>
+                <tr>
+                    <td>📧 Allgemeine Anfrage ohne Betrieb</td>
+                    <td>Weiterleitung an Fachbereichsleiter</td>
+                    <td><code>POST /posteingaenge/{id}/weiterleiten</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- API ENDPOINTS -->
+        <h2 id="api-endpoints">5. API-Endpunkte (Detaillierte Spezifikation)</h2>
+
+        <p>Die API folgt REST-Prinzipien und ist vollständig in OpenAPI 3.0 dokumentiert. Hier die wichtigsten Endpunkte für Phase 1:</p>
+
+        <!-- Endpoint 1 -->
+        <div class="endpoint-card priority-high">
+            <div class="endpoint-header">
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/arbeitskorb/posteingaenge</code>
+                </div>
+                <span class="endpoint-tag">Core Feature</span>
+            </div>
+            <p><strong>Beschreibung:</strong> Ruft Posteingänge aus dem IFAS-Arbeitskorb ab. Unterstützt Filterung nach Status, Eingangsart, Datum und Pagination.</p>
+            <h4>Query-Parameter:</h4>
+            <ul style="font-size: 0.9rem;">
+                <li><code>status</code> - neu, in_bearbeitung, weitergeleitet, abgeschlossen</li>
+                <li><code>eingangsart</code> - MUTTERSCHUTZ, PYROTECHNIK_FEUERWERKSK, etc.</li>
+                <li><code>von_datum</code> / <code>bis_datum</code> - YYYY-MM-DD Format</li>
+                <li><code>limit</code> (max: 200) / <code>offset</code> - Pagination</li>
+            </ul>
+            <h4>Response (200 OK):</h4>
+            <pre><code>{
+  "success": true,
+  "count": 3,
+  "total": 15,
+  "results": [
+    {
+      "posteingang_id": "POST-2026-00123",
+      "eingangsdatum": "2026-01-15T08:30:00Z",
+      "eingangsart": "MUTTERSCHUTZ",
+      "betreff": "Mutterschutz-Meldung Maria Mustermann",
+      "status": "neu",
+      "absender": {
+        "name": "RSA Testbetrieb",
+        "email": "personal@rsa-testbetrieb.de"
+      },
+      "erkannte_daten": {
+        "betrieb_name": "RSA Testbetrieb",
+        "betrieb_plz": "22880",
+        "confidence": 0.92
+      },
+      "anhaenge": [...]
+    }
+  ]
+}</code></pre>
+        </div>
+
+        <!-- Endpoint 2 -->
+        <div class="endpoint-card priority-high">
+            <div class="endpoint-header">
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/anzeigen</code>
+                </div>
+                <span class="endpoint-tag">Core Feature</span>
+            </div>
+            <p><strong>Beschreibung:</strong> Erstellt eine neue Anzeige in IFAS. Validiert automatisch Pflichtfelder je nach Anzeigenart.</p>
+            <h4>Request Body (Beispiel: Mutterschutz):</h4>
+            <pre><code>{
+  "betriebsstaetten_id": "BS-123456",
+  "anzeigenart": "MUTTERSCHUTZ",
+  "anzeige_vom": "2026-01-15",
+  "anzeige_aufgenommen_durch": "IFAS-Assist",
+  "betreff": "Mutterschutz-Anzeige für Maria Mustermann",
+  "felder": {
+    "name_schwangere": "Maria Mustermann",
+    "status": "schwanger",
+    "beschaeftigungsort": "Wedel, Produktionshalle",
+    "voraussichtlicher_entbindungstermin": "2026-08-15"
+  },
+  "posteingang_id": "POST-2026-00123"
+}</code></pre>
+            <h4>Response (201 Created):</h4>
+            <pre><code>{
+  "success": true,
+  "message": "Anzeige erfolgreich erstellt",
+  "data": {
+    "anzeigen_id": "ANZ-2026-001234",
+    "vorgangsnummer": "IZ 000 052 425",
+    "aktenzeichen": "Vg. 123/2026-DU",
+    "status": "erfasst"
+  }
+}</code></pre>
+        </div>
+
+        <!-- Endpoint 3 -->
+        <div class="endpoint-card priority-high">
+            <div class="endpoint-header">
+                <div>
+                    <span class="method post">POST</span>
+                    <code>/anzeigen/{id}/schreiben</code>
+                </div>
+                <span class="endpoint-tag">Kritisch</span>
+            </div>
+            <p><strong>Beschreibung:</strong> Hängt ein Schreiben (Dokument, E-Mail, Nachtrag) an eine bestehende Anzeige an. Entspricht dem Karteireiter "Schreiben" in IFAS.</p>
+            <div class="alert alert-warning" style="margin-top: 1rem;">
+                <i class="fa-solid fa-lightbulb"></i>
+                <div>
+                    <strong>Wichtig:</strong> Nicht jeder Posteingang wird eine neue Anzeige! Änderungsmeldungen, Nachträge oder Rückfragen zu bestehenden Vorgängen werden als "Schreiben" angehängt, nicht als neue Anzeige erfasst.
+                </div>
+            </div>
+            <h4>Request Body:</h4>
+            <pre><code>{
+  "posteingang_id": "POST-2026-00125",
+  "schreiben_typ": "eingang",
+  "datum": "2026-01-20",
+  "betreff": "Änderungsmeldung - neuer Entbindungstermin",
+  "bemerkung": "Entbindungstermin geändert auf 2026-08-20",
+  "anhaenge_uebernehmen": true,
+  "felder_aktualisieren": {
+    "voraussichtlicher_entbindungstermin": "2026-08-20"
+  }
+}</code></pre>
+            <h4>Response (201 Created):</h4>
+            <pre><code>{
+  "success": true,
+  "message": "Schreiben erfolgreich angehängt",
+  "data": {
+    "schreiben_id": "SCH-2026-00042",
+    "anzeigen_id": "ANZ-2026-001234",
+    "felder_aktualisiert": true
+  }
+}</code></pre>
+        </div>
+
+        <!-- Endpoint 4 -->
+        <div class="endpoint-card">
+            <div class="endpoint-header">
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/betriebsstaetten/search</code>
+                </div>
+                <span class="endpoint-tag">Smart Search</span>
+            </div>
+            <p><strong>Beschreibung:</strong> Sucht Betriebsstätten mit Fuzzy-Matching. Findet Treffer auch bei Tippfehlern oder unvollständigen Angaben.</p>
+            <h4>Query-Parameter:</h4>
+            <ul style="font-size: 0.9rem;">
+                <li><code>name</code> - Name des Betriebs</li>
+                <li><code>plz</code> - Postleitzahl</li>
+                <li><code>ort</code> - Ort</li>
+                <li><code>fuzzy</code> - Fuzzy-Matching aktivieren (default: true)</li>
+            </ul>
+            <h4>Response:</h4>
+            <pre><code>{
+  "success": true,
+  "results": [
+    {
+      "betriebsstaetten_id": "BS-123456",
+      "name": "RSA Testbetrieb GmbH",
+      "adresse": {...},
+      "match_score": 0.95,
+      "aktiv": true
+    }
+  ]
+}</code></pre>
+        </div>
+
+        <!-- Endpoint 5 -->
+        <div class="endpoint-card priority-high">
+            <div class="endpoint-header">
+                <div>
+                    <span class="method get">GET</span>
+                    <code>/betriebsstaetten/{id}/zustaendiger</code>
+                </div>
+                <span class="endpoint-tag">Smart Routing</span>
+            </div>
+            <p><strong>Beschreibung:</strong> Ermittelt den zuständigen Sachbearbeiter für eine Betriebsstätte. Kern-Feature für automatisches Routing.</p>
+            <h4>Response (200 OK):</h4>
+            <pre><code>{
+  "success": true,
+  "data": {
+    "betriebsstaetten_id": "BS-123456",
+    "zustaendiger": {
+      "mitarbeiter_id": "MA-98765",
+      "name": "Schmidt, Thomas",
+      "email": "thomas.schmidt@lasg.landsh.de",
+      "rolle": "Sachbearbeiter Mutterschutz"
+    },
+    "vertretung": {...}
+  }
+}</code></pre>
+            <h4>Response (404 Not Found) - Kein Zuständiger:</h4>
+            <pre><code>{
+  "success": false,
+  "error": {
+    "code": "NO_ZUSTAENDIGER_ASSIGNED",
+    "message": "Keine Zuständigkeit hinterlegt",
+    "fallback_mitarbeiter_id": "MA-99999",
+    "fallback_name": "Abteilungsleitung SB 403"
+  }
+}</code></pre>
+        </div>
+
+        <!-- TECH & SECURITY -->
+        <h2 id="api-tech">6. Technische Anforderungen & Sicherheit</h2>
+
+        <div class="alert alert-warning">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <div>
+                <strong>Entscheidung im Kick-off erforderlich:</strong> Der finale Technologie-Stack (Spring Boot vs. FastAPI vs. ASP.NET) wird im Workshop mit Kisters festgelegt. LASG empfiehlt: Technologieoffen, aber container-ready und gut wartbar.
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="feature-box">
+                <h4><i class="fa-solid fa-shield-halved"></i> Sicherheitsanforderungen (zwingend)</h4>
+                <ul>
+                    <li><strong>TLS 1.3:</strong> Verschlüsselte Übertragung (erzwungen, keine Ausnahmen)</li>
+                    <li><strong>JWT Auth:</strong> Token-basiert mit auto. Rotation (1h Laufzeit)</li>
+                    <li><strong>IP-Whitelist:</strong> Nur LASG-IP-Adressen erlaubt</li>
+                    <li><strong>Rate Limiting:</strong> Max. 100 Requests/Minute pro API-Key</li>
+                    <li><strong>Input-Validierung:</strong> Schutz gegen SQL-Injection, XSS, CSRF</li>
+                    <li><strong>Audit-Logging:</strong> Alle Zugriffe protokolliert (Zeitstempel, User, Aktion)</li>
+                    <li><strong>DSGVO:</strong> Separater AVV (Auftragsverarbeitungsvertrag)</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4><i class="fa-solid fa-gauge-high"></i> Performance & Qualität</h4>
+                <ul>
+                    <li><strong>Antwortzeit GET:</strong> &lt; 500ms (95. Perzentil)</li>
+                    <li><strong>Antwortzeit POST:</strong> &lt; 2 Sekunden (95. Perzentil)</li>
+                    <li><strong>Skalierbarkeit:</strong> Min. 50 parallele Requests</li>
+                    <li><strong>Verfügbarkeit:</strong> &gt; 99.5% (Mo-Fr, 7-18 Uhr)</li>
+                    <li><strong>Testabdeckung:</strong> &gt; 80% Unit-Tests</li>
+                    <li><strong>Dokumentation:</strong> Vollständig (OpenAPI, Swagger UI, Postman)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- PHASE 2: IFAS-ASSIST -->
+        <h2 id="assist-overview">7. Phase 2: IFAS-Assist (Interne Entwicklung)</h2>
+
+        <div class="alert alert-info">
+            <i class="fa-solid fa-info-circle"></i>
+            <div>
+                <strong>Folgt nach erfolgreicher API-Fertigstellung</strong><br>
+                Der IFAS-Assist wird intern durch LASG SB 403 IT entwickelt, sobald die API aus Phase 1 produktionsreif ist. Die API ist die technische Voraussetzung für den Assistenten.
+            </div>
+        </div>
+
+        <div class="card card-assist">
+            <h3><i class="fa-solid fa-robot"></i> Was ist der IFAS-Assist?</h3>
+            <p>Der IFAS-Assist ist eine webbasierte Anwendung, die Sachbearbeitern die Erfassung von Anzeigen durch KI-Unterstützung massiv erleichtert:</p>
+            
+            <div class="grid-2" style="margin-top: 1.5rem;">
+                <div>
+                    <h4>Backend (Python)</h4>
+                    <ul>
+                        <li>Automatischer Abruf neuer Posteingänge via API</li>
+                        <li>KI-Datenextraktion (PDF OCR + NLP)</li>
+                        <li>Automatische Betriebssuche (Fuzzy)</li>
+                        <li>Smart Routing an Zuständige</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Frontend (Web)</h4>
+                    <ul>
+                        <li>Übersichtliche Posteingangs-Liste</li>
+                        <li>Extrahierte Daten zur Validierung</li>
+                        <li>"Ein-Klick-Erfassung" nach Prüfung</li>
+                        <li>Korrektur-Interface bei Fehlern</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 id="assist-features">KI-Features des IFAS-Assist</h3>
+
+        <div class="grid-3">
+            <div class="feature-box">
+                <h4><i class="fa-solid fa-file-pdf"></i> PDF/E-Mail Extraktion</h4>
+                <p>OCR + Natural Language Processing extrahiert Daten aus:</p>
+                <ul style="font-size: 0.9rem;">
+                    <li>Ausgefüllten Formularen</li>
+                    <li>Fließtexten</li>
+                    <li>Tabellen</li>
+                    <li>Unterschriften (Metadaten)</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4><i class="fa-solid fa-tags"></i> Auto-Kategorisierung</h4>
+                <p>Machine Learning erkennt automatisch:</p>
+                <ul style="font-size: 0.9rem;">
+                    <li>Anzeigenart (Mutterschutz, Pyro, etc.)</li>
+                    <li>Betriebsname/-adresse</li>
+                    <li>Datumsangaben</li>
+                    <li>Personendaten</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4><i class="fa-solid fa-check-double"></i> Validierung</h4>
+                <p>System prüft automatisch:</p>
+                <ul style="font-size: 0.9rem;">
+                    <li>Vollständigkeit Pflichtfelder</li>
+                    <li>Plausibilität (Datumslogik)</li>
+                    <li>Duplikate</li>
+                    <li>Confidence-Score</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CONTRACT -->
+        <h2 id="contract">8. Beauftragungsumfang (Phase 1)</h2>
+
+        <p>Der Auftrag an Kisters AG umfasst die komplette Entwicklung der REST-API gemäß folgender Spezifikation:</p>
+
+        <h3>Hauptleistungen</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Leistungspaket</th>
+                    <th style="width: 120px;">Liefertermin</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>
+                        <strong>Konzeption & Feinspezifikation</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>OpenAPI 3.0 Spezifikation (vollständig)</li>
+                            <li>Architektur-Design-Dokument mit Technologie-Empfehlung</li>
+                            <li>Sicherheitskonzept (TLS, JWT, Rate Limiting)</li>
+                            <li>Klärung IFAS-Datenstrukturen (Schreiben, Arbeitskorb, Zuständigkeiten)</li>
+                        </ul>
+                    </td>
+                    <td>KW 4/2026</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>
+                        <strong>Entwicklung REST-API (MVP)</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>Implementierung aller "HOCH"-Priorität Endpunkte</li>
+                            <li>Arbeitskorb-Funktionalität (Abrufen, Aktualisieren)</li>
+                            <li>Anzeigen-Management (Erstellen, Schreiben anhängen)</li>
+                            <li>Intelligente Sachbearbeiter-Zuordnung</li>
+                            <li>Betriebsstätten-Suche (Fuzzy-Matching)</li>
+                            <li>JWT-Authentifizierung mit Rotation</li>
+                        </ul>
+                    </td>
+                    <td>KW 10/2026</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>
+                        <strong>Erweiterung & Finalisierung</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>"MITTEL"-Priorität Endpunkte</li>
+                            <li>Performance-Optimierung (Caching, Indexierung)</li>
+                            <li>Fehlerbehandlung mit deutschen Meldungen</li>
+                            <li>Monitoring-Integration (Health-Checks, Metriken)</li>
+                            <li>Audit-Logging aller API-Zugriffe</li>
+                        </ul>
+                    </td>
+                    <td>KW 14/2026</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>
+                        <strong>Testing & Qualitätssicherung</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>Unit-Tests (Abdeckung &gt;80%)</li>
+                            <li>Integrationstests für alle Haupt-Endpunkte</li>
+                            <li>Performance-Tests (Last-Szenarien, 50+ parallel)</li>
+                            <li>Sicherheits-Audit / Penetration-Testing</li>
+                            <li>Testdokumentation und Protokolle</li>
+                        </ul>
+                    </td>
+                    <td>KW 15/2026</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>
+                        <strong>Dokumentation</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>OpenAPI-Dokumentation mit Swagger-UI (interaktiv)</li>
+                            <li>Entwickler-Handbuch (Setup, API-Nutzung, Beispiele)</li>
+                            <li>Operations-Handbuch (Deployment, Monitoring)</li>
+                            <li>Architektur-Dokumentation (UML-Diagramme)</li>
+                            <li>Postman Collection mit Beispielanfragen</li>
+                        </ul>
+                    </td>
+                    <td>KW 15/2026</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>
+                        <strong>Deployment & Go-Live</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>Installation LASG-Testumgebung</li>
+                            <li>Installation LASG-Produktivumgebung</li>
+                            <li>Go-Live Support (on-site oder remote)</li>
+                            <li>Hypercare-Phase (2 Wochen erhöhte Support-Bereitschaft)</li>
+                        </ul>
+                    </td>
+                    <td>KW 16/2026</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>
+                        <strong>Schulung</strong>
+                        <ul style="margin: 0.5rem 0; font-size: 0.9rem;">
+                            <li>Technische Schulung LASG IT-Mitarbeiter (1 Tag, max. 8 Pers.)</li>
+                            <li>API-Nutzung für Entwickler (halber Tag, max. 5 Pers.)</li>
+                            <li>Schulungsunterlagen (PowerPoint, Übungen, Cheat-Sheets)</li>
+                        </ul>
+                    </td>
+                    <td>KW 16/2026</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- TIMELINE & COSTS -->
+        <h2 id="timeline">9. Zeitplan, Meilensteine & Kosten</h2>
+
+        <h3>Projekt-Timeline</h3>
+
+        <div class="card">
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">KW 02-03 / 2026</div>
+                    <h4>M1: Kick-off & Initialisierung</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Workshop durchgeführt, Technologie-Stack festgelegt, Offene Fragen geklärt. Team-Setup abgeschlossen.</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"><strong>Zahlung:</strong> 10% der Auftragssumme</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">KW 04 / 2026</div>
+                    <h4>M2: Konzept & Vertrag</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">OpenAPI 3.0 Spezifikation finalisiert, Architektur-Design-Dokument, Sicherheitskonzept abgestimmt.</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"><strong>Zahlung:</strong> 15%</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot milestone"></div>
+                    <div class="timeline-date">KW 10 / 2026</div>
+                    <h4>M3: MVP (Großer Meilenstein)</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Alle "HOCH"-Priorität Endpunkte implementiert, Test-API verfügbar, Basis-Dokumentation vorhanden.</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"><strong>Zahlung:</strong> 40%</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">KW 14 / 2026</div>
+                    <h4>M4: Feature-Complete</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Alle Features implementiert, Tests bestanden (Unit + Integration), Vollständige Dokumentation, Sicherheits-Audit erfolgreich.</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"><strong>Zahlung:</strong> 20%</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot milestone"></div>
+                    <div class="timeline-date">KW 16 / 2026</div>
+                    <h4>M5: Go-Live</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Produktiv-Deployment erfolgreich, Abnahmetests bestanden, Schulungen durchgeführt, API produktiv nutzbar.</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"><strong>Zahlung:</strong> 10%</p>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-date">KW 18 / 2026</div>
+                    <h4>M6: Projektabschluss</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">Hypercare-Phase abgeschlossen (2 Wochen), Alle Deliverables übergeben, Projektdokumentation finalisiert, Lessons Learned Workshop.</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text-muted);"><strong>Zahlung:</strong> 5%</p>
+                </div>
+            </div>
+        </div>
+
+        <h3>Vergütung & Zahlungsplan</h3>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4><i class="fa-solid fa-euro-sign"></i> Vergütungsmodell</h4>
+                <p><strong>Festpreis</strong> auf Basis der vereinbarten Leistungspakete</p>
+                <p style="margin-top: 1.5rem;"><strong>Geschätzter Preisrahmen (Phase 1):</strong></p>
+                <div class="stat-value" style="font-size: 2rem;">30-70k €</div>
+                <div class="stat-label">Netto (zzgl. 19% MwSt.)</div>
+                <p style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">Basierend auf Marktpreisen für vergleichbare REST-API Entwicklungen im Behördenumfeld. Finale Vergütung wird nach Angebot von Kisters AG verhandelt.</p>
+            </div>
+
+            <div class="card">
+                <h4><i class="fa-solid fa-money-bill-wave"></i> Zahlungsplan</h4>
+                <table style="font-size: 0.9rem; margin-top: 0;">
+                    <thead>
+                        <tr>
+                            <th>Meilenstein</th>
+                            <th>Anteil</th>
+                            <th>Kumuliert</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>M1: Kick-off</td>
+                            <td>10%</td>
+                            <td>10%</td>
+                        </tr>
+                        <tr>
+                            <td>M2: Konzept</td>
+                            <td>15%</td>
+                            <td>25%</td>
+                        </tr>
+                        <tr>
+                            <td>M3: MVP</td>
+                            <td>40%</td>
+                            <td>65%</td>
+                        </tr>
+                        <tr>
+                            <td>M4: Feature-Complete</td>
+                            <td>20%</td>
+                            <td>85%</td>
+                        </tr>
+                        <tr>
+                            <td>M5: Go-Live</td>
+                            <td>10%</td>
+                            <td>95%</td>
+                        </tr>
+                        <tr>
+                            <td>M6: Abschluss</td>
+                            <td>5%</td>
+                            <td>100%</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem; margin-bottom: 0;">Zahlungsziel: 30 Tage nach Rechnungseingang</p>
+            </div>
+        </div>
+
+        <!-- TEAM -->
+        <h2 id="team">10. Projektteam & Rollen</h2>
+
+        <div class="grid-2">
+            <div class="card card-api">
+                <h4><i class="fa-solid fa-building"></i> Auftraggeber (LASG)</h4>
+                <table style="font-size: 0.9rem; margin-top: 0.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Rolle</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Projektleitung IT</strong></td>
+                            <td>[Von LASG zu benennen]</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fachexperten Arbeitsschutz</strong></td>
+                            <td>[Von LASG zu benennen]</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Entwicklung Phase 2</strong></td>
+                            <td>SB 403 IT (intern, Python/AI)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h4 style="margin-top: 1.5rem;">Mitwirkungspflichten LASG:</h4>
+                <ul style="font-size: 0.9rem;">
+                    <li>Zugang IFAS-Testumgebung (VPN, Credentials)</li>
+                    <li>Testdaten (30 Beispieldokumente/Anzeigenart)</li>
+                    <li>Fachliche Ansprechpartner (Reaktionszeit &lt;2 Tage)</li>
+                    <li>Code-Review-Kapazität (~16h gesamt)</li>
+                    <li>Abnahmetests (~24h gesamt)</li>
+                </ul>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--secondary);">
+                <h4><i class="fa-solid fa-handshake"></i> Auftragnehmer (Kisters AG)</h4>
+                <table style="font-size: 0.9rem; margin-top: 0.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Rolle</th>
+                            <th>Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Projektleitung AN</strong></td>
+                            <td>[Von Kisters zu benennen]</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tech Lead API</strong></td>
+                            <td>[Von Kisters zu benennen]</td>
+                        </tr>
+                        <tr>
+                            <td><strong>QA & Testing</strong></td>
+                            <td>Kisters QS-Team</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="margin-top: 1.5rem;">Kommunikation:</h4>
+                <ul style="font-size: 0.9rem;">
+                    <li>Wöchentlicher Status-Call (30 Min, Videokonferenz)</li>
+                    <li>Review-Meetings nach jeder Projektphase</li>
+                    <li>Change Requests schriftlich, Bearbeitung binnen 5 Tagen</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- DELIVERABLES -->
+        <h2 id="deliverables">11. Lieferumfang</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Komponente</th>
+                    <th>Format</th>
+                    <th>Beschreibung</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>REST-API Anwendung</strong></td>
+                    <td>Docker Container</td>
+                    <td>Lauffähige, produktionsreife API (inkl. Dockerfile)</td>
+                </tr>
+                <tr>
+                    <td><strong>Quellcode</strong></td>
+                    <td>Git-Repository</td>
+                    <td>Vollständiger Source Code mit Historie und Branches</td>
+                </tr>
+                <tr>
+                    <td><strong>OpenAPI-Spezifikation</strong></td>
+                    <td>YAML + Swagger-UI</td>
+                    <td>Interaktive API-Dokumentation (OpenAPI 3.0)</td>
+                </tr>
+                <tr>
+                    <td><strong>Test-Suite</strong></td>
+                    <td>JUnit/pytest/etc.</td>
+                    <td>Automatisierte Tests (&gt;80% Coverage)</td>
+                </tr>
+                <tr>
+                    <td><strong>Postman Collection</strong></td>
+                    <td>JSON</td>
+                    <td>Beispielanfragen für alle Endpunkte</td>
+                </tr>
+                <tr>
+                    <td><strong>Entwickler-Dokumentation</strong></td>
+                    <td>Markdown/HTML/PDF</td>
+                    <td>Setup, API-Nutzung, Code-Beispiele (min. 30 Seiten)</td>
+                </tr>
+                <tr>
+                    <td><strong>Operations-Handbuch</strong></td>
+                    <td>PDF</td>
+                    <td>Deployment, Monitoring, Troubleshooting (min. 25 Seiten)</td>
+                </tr>
+                <tr>
+                    <td><strong>Schulungsunterlagen</strong></td>
+                    <td>PowerPoint + PDF</td>
+                    <td>Materialien für technische Schulungen</td>
+                </tr>
+                <tr>
+                    <td><strong>Migrations-Skripte</strong></td>
+                    <td>SQL</td>
+                    <td>Falls DB-Änderungen an IFAS erforderlich</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- OPEN QUESTIONS -->
+        <h2 id="open-questions">12. Offene Fragen (Vor Vertragsabschluss)</h2>
+
+        <div class="alert alert-danger">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div>
+                <strong>Kritisch: Kick-off Workshop (KW 3) zwingend erforderlich!</strong><br>
+                Folgende Punkte MÜSSEN vor Vertragsabschluss geklärt werden, um Risiken zu minimieren und realistische Aufwandsschätzungen zu ermöglichen.
+            </div>
+        </div>
+
+        <h3>Technische Fragen (HOCH-Priorität)</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 60px;">Prio</th>
+                    <th>Thema</th>
+                    <th>Zu klärende Frage</th>
+                    <th style="width: 80px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                    <td>Technologie-Stack</td>
+                    <td>Welche Technologie empfiehlt Kisters? (Spring Boot / FastAPI / ASP.NET Core)</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                    <td>IFAS-Integration</td>
+                    <td>Wie erfolgt die Integration mit der bestehenden IFAS Java-API? (Wrapper vs. Direct DB Access)</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                    <td>Schreiben-Funktionalität</td>
+                    <td>Gibt es eine API-Methode zum Anhängen von Schreiben? Wie ist die DB-Struktur?</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                    <td>Arbeitskorb-Datenstruktur</td>
+                    <td>Wie ist der Arbeitskorb technisch umgesetzt? (Tabelle, Felder, Zuordnung)</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-danger); font-weight: 700;">HOCH</span></td>
+                    <td>Sachbearbeiter-Zuordnung</td>
+                    <td>Wie werden Zuständigkeiten in IFAS verwaltet? (Tabelle, API-Methode)</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-warning); font-weight: 700;">MITTEL</span></td>
+                    <td>Testumgebung</td>
+                    <td>Zugang (VPN/IP) und Bereitstellung anonymisierter Testdaten bis KW 6?</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-warning); font-weight: 700;">MITTEL</span></td>
+                    <td>Deployment-Modell</td>
+                    <td>Docker Container / Standalone / Integration in IFAS-Umgebung?</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td><span style="color: var(--accent-warning); font-weight: 700;">MITTEL</span></td>
+                    <td>Hosting</td>
+                    <td>On-Premise (LASG) vs. Kisters RZ vs. Cloud?</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+                <tr>
+                    <td>NIEDRIG</td>
+                    <td>Monitoring-Tools</td>
+                    <td>Welche Tools für Monitoring? (Prometheus, Grafana, Application Insights?)</td>
+                    <td><i class="fa-regular fa-square"></i> Offen</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- RISKS -->
+        <h2 id="risks">13. Risiken & Sicherheit</h2>
+
+        <div class="grid-2">
+            <div class="card" style="border-left: 4px solid var(--accent-danger);">
+                <h4><i class="fa-solid fa-triangle-exclamation"></i> Identifizierte Risiken</h4>
+                <table style="font-size: 0.9rem; margin-top: 0.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Risiko</th>
+                            <th>Impact</th>
+                            <th>Wahrsch.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Schreiben-API fehlt in IFAS</td>
+                            <td>HOCH</td>
+                            <td>MITTEL</td>
+                        </tr>
+                        <tr>
+                            <td>Unbekannte DB-Strukturen</td>
+                            <td>HOCH</td>
+                            <td>MITTEL</td>
+                        </tr>
+                        <tr>
+                            <td>Performance-Probleme</td>
+                            <td>MITTEL</td>
+                            <td>NIEDRIG</td>
+                        </tr>
+                        <tr>
+                            <td>Verzug durch LASG (Testdaten)</td>
+                            <td>MITTEL</td>
+                            <td>MITTEL</td>
+                        </tr>
+                        <tr>
+                            <td>Sicherheits-Audit scheitert</td>
+                            <td>HOCH</td>
+                            <td>NIEDRIG</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent-success);">
+                <h4><i class="fa-solid fa-shield"></i> Sicherheits-Strategien</h4>
+                <ul style="font-size: 0.9rem;">
+                    <li><strong>Kick-off Workshop:</strong> Frühzeitige Klärung technischer Details mit Kisters</li>
+                    <li><strong>Prototyping:</strong> Proof-of-Concept für kritische Features (Woche 1-2)</li>
+                    <li><strong>Iteratives Vorgehen:</strong> MVP-Ansatz mit schnellen Feedback-Schleifen</li>
+                    <li><strong>Testdaten früh:</strong> LASG bereitet Testdaten bis KW 6 vor</li>
+                    <li><strong>Sicherheit von Anfang an:</strong> Security-by-Design, nicht nachträglich</li>
+                    <li><strong>Puffer im Zeitplan:</strong> 2 Wochen Puffer zwischen MVP und Go-Live</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- NEXT STEPS -->
+        <h2>14. Nächste Schritte</h2>
+
+        <div class="grid-3">
+            <div class="card" style="border-top: 4px solid var(--accent-danger);">
+                <h4><i class="fa-solid fa-1"></i> Sofort (KW 2/2026)</h4>
+                <ul class="checklist" style="font-size: 0.9rem;">
+                    <li>Interne Freigabe dieses Konzepts</li>
+                    <li>Budgetfreigabe einholen</li>
+                    <li>Kontakt zu Kisters AG aufnehmen</li>
+                    <li>Kick-off Workshop terminieren (KW 3)</li>
+                    <li>Dieses Dokument + offene Fragen an Kisters senden</li>
+                </ul>
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--accent-warning);">
+                <h4><i class="fa-solid fa-2"></i> Kick-off (KW 3/2026)</h4>
+                <ul class="checklist" style="font-size: 0.9rem;">
+                    <li>Offene Fragen durchgehen</li>
+                    <li>Technologie-Stack festlegen</li>
+                    <li>Schreiben-Funktionalität klären</li>
+                    <li>Angebot anfordern von Kisters</li>
+                    <li>Risikoanalyse gemeinsam durchführen</li>
+                </ul>
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--accent-success);">
+                <h4><i class="fa-solid fa-3"></i> Vertrag (KW 4-5/2026)</h4>
+                <ul class="checklist" style="font-size: 0.9rem;">
+                    <li>Angebot prüfen und verhandeln</li>
+                    <li>Vertrag unterzeichnen</li>
+                    <li>Testdaten vorbereiten (bis KW 6)</li>
+                    <li>Projektstart KW 5</li>
+                    <li><strong>Go-Live: KW 16/2026</strong> 🎉</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer>
+            <p style="font-size: 1rem; margin-bottom: 0.5rem;"><strong>Landesamt für Arbeitsschutz, Soziales und Gesundheit (LASG)</strong></p>
+            <p>Abteilung 4 | SB 403 IT | Schleswig-Holstein</p>
+            <p style="margin-top: 1rem;">
+                <span class="badge badge-api" style="margin-right: 0.5rem;">IFAS-API</span>
+                <span class="badge badge-assist">IFAS-Assist</span>
+            </p>
+            <p style="margin-top: 1rem; font-size: 0.85rem;">Master-Dokumentation v4.0 - Januar 2026 - Vertraulich</p>
+        </footer>
+
+    </main>
+
+    <!-- SCROLL TO TOP BUTTON -->
+    <button class="scroll-top" id="scrollTopBtn">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Smooth Scrolling for Sidebar Links
+        document.querySelectorAll('.nav-links a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Update active state
+                    document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // Scroll to Top Button
+        const scrollTopBtn = document.getElementById('scrollTopBtn');
+        
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        });
+
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Update active nav item on scroll
+        const sections = document.querySelectorAll('h2[id], h3[id]');
+        const navLinks = document.querySelectorAll('.nav-links a');
+
+        function updateActiveNav() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+    </script>
+</body>
+</html>

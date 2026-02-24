@@ -1,0 +1,96 @@
+{% extends "admin/index.html" %}
+
+{% block admin_content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}{% for category, message in messages %}
+<div
+    class="p-4 rounded-lg mb-4 {% if category == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">
+    {{ message }}</div>
+{% endfor %}{% endif %}
+{% endwith %}
+
+<div class="glass rounded-2xl border border-white/20 shadow-sm">
+    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+            <i data-lucide="inbox" class="w-5 h-5 text-primary-600"></i>
+            Eingangslayer
+        </h2>
+        <a href="{{ url_for('admin.new_input') }}"
+            class="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+            <i data-lucide="plus" class="w-4 h-4"></i>Neuer Eingangslayer
+        </a>
+    </div>
+    <div class="divide-y divide-slate-100">
+        {% for source in sources %}
+        <div class="p-4 flex items-center gap-4 hover:bg-slate-50 block relative group/item">
+            <a href="{{ url_for('admin.edit_input', source_id=source.id) }}" class="absolute inset-0 z-0"></a>
+            <div
+                class="w-12 h-12 rounded-xl flex items-center justify-center relative z-10 pointer-events-none {% if source.is_active %}bg-green-100{% else %}bg-slate-100{% endif %}">
+                <i data-lucide="{% if source.source_type == 'folder' %}folder{% elif source.source_type == 'imap' %}mail{% else %}cloud{% endif %}"
+                    class="w-6 h-6 {% if source.is_active %}text-green-600{% else %}text-slate-400{% endif %}"></i>
+            </div>
+            <div class="flex-1 relative z-10 pointer-events-none">
+                <p class="font-medium text-slate-800">{{ source.name }}</p>
+                <p class="text-sm text-slate-500">{{ source.source_type.upper() }} • {{ source.poll_interval }}s</p>
+            </div>
+            <div class="flex items-center gap-1 relative z-10">
+                <a href="{{ url_for('admin.edit_input', source_id=source.id) }}"
+                    class="p-2 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-4 h-4">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                        <path d="m15 5 4 4" />
+                    </svg>
+                </a>
+                <button data-id="{{ source.id }}" data-name="{{ source.name }}"
+                    class="delete-source-btn p-2 hover:bg-red-100 rounded-lg group text-slate-400 hover:text-red-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-4 h-4">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-slate-500">Keine Eingangslayer</div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+
+<script>
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.delete-source-btn');
+        if (btn) {
+            e.preventDefault();
+            deleteSource(btn.dataset.id, btn.dataset.name);
+        }
+    });
+
+    async function deleteSource(id, name) {
+        if (!confirm(`Möchten Sie den Eingangslayer '${name}' wirklich löschen?\nAlle zugehörigen Dokumente bleiben erhalten, aber der Import wird gestoppt.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/sources/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+
+            if (data.success) {
+                // Remove element or reload
+                window.location.reload();
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        } catch (e) {
+            alert('Fehler: ' + e.message);
+        }
+    }
+</script>
+{% endblock %}

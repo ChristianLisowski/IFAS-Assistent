@@ -1,0 +1,39 @@
+{% for doc in documents %}
+<a href="{{ url_for('main.validation', doc=doc.id, status=filter_status, category=filter_category, q=search_query) }}"
+    class="block p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors {{ 'bg-blue-50 border-blue-200' if selected_document and selected_document.id == doc.id else '' }} relative group"
+    onclick="saveScrollPosition()">
+    <div class="flex items-start justify-between mb-1">
+        <h3 class="font-medium text-slate-800 line-clamp-1 pr-6">{{ doc.email_subject or doc.filename }}
+        </h3>
+        {% if doc.status == 'ready' %}
+        <span class="w-2 h-2 rounded-full bg-green-500 mt-2 shrink-0"></span>
+        {% elif doc.status == 'transferred' %}
+        <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 shrink-0"></span>
+        {% endif %}
+    </div>
+    <p class="text-xs text-slate-500 mb-2 truncate">{{ doc.email_from or 'Unbekannter Absender' }}</p>
+    <div class="flex items-center justify-between">
+        <span
+            class="text-xs px-2 py-0.5 rounded-full {{ 'bg-slate-100 text-slate-600' if not doc.category else 'bg-blue-100 text-blue-700' }}">
+            {{ doc.category.name if doc.category else 'Nicht kategorisiert' }}
+        </span>
+        <span class="text-xs text-slate-400">{{ doc.received_at.strftime('%d.%m. %H:%M') }}</span>
+    </div>
+
+    <!-- Delete Button (only for non-transferred or if admin) -->
+    {% if doc.status != 'transferred' or current_user.is_admin %}
+    <button data-id="{{ doc.id }}" onclick="deleteDocument(event, this.dataset.id)"
+        class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg {{ 'opacity-0 group-hover:opacity-100' if doc.status != 'rejected' else '' }} transition-all"
+        title="Dokument löschen">
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+    </button>
+    {% endif %}
+</a>
+{% else %}
+<div class="p-8 text-center">
+    <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="inbox" class="w-6 h-6 text-slate-300"></i>
+    </div>
+    <p class="text-slate-500">Keine Dokumente gefunden</p>
+</div>
+{% endfor %}

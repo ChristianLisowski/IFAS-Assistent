@@ -1,0 +1,727 @@
+{% extends "admin/index.html" %}
+
+{% block title %}Einstellungen - Admin - IFAS-Assistent{% endblock %}
+
+{% block admin_content %}
+<div class="px-1 py-1">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-xl font-bold text-slate-800 flex items-center gap-3">
+            <i data-lucide="settings" class="w-6 h-6 text-primary-600"></i>
+            Systemeinstellungen
+        </h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="fixed top-24 right-4 z-50 flex flex-col gap-2 w-96 max-w-full">
+        {% for category, message in messages %}
+        <div
+            class="p-4 rounded-xl shadow-lg flex items-center justify-between {{ 'bg-green-50 text-green-800 border border-green-200' if category == 'success' else 'bg-red-50 text-red-800 border border-red-200' }}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()"
+                class="ml-4 text-sm opacity-50 hover:opacity-100">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="space-y-4">
+
+        <!-- 1. E-Mail & Benachrichtigungen (User Management) -->
+        <details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <summary
+                class="flex items-center justify-between p-4 cursor-pointer list-none bg-slate-50 hover:bg-slate-100 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-100 rounded-lg">
+                        <i data-lucide="bell" class="w-5 h-5 text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-800">Benachrichtigungen & Benutzer</h2>
+                        <p class="text-xs text-slate-500">E-Mail-Server und benutzerspezifische Alarme</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 group-open:rotate-180"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </summary>
+
+            <div class="p-6 border-t border-slate-200 space-y-8">
+                <!-- SMTP Config -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
+                    <div class="space-y-4">
+                        <h3 class="text-sm font-medium text-slate-900 flex items-center gap-2">
+                            <i data-lucide="server" class="w-4 h-4 text-slate-400"></i>
+                            SMTP Server Einstellungen
+                        </h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-medium text-slate-500 mb-1">Server</label>
+                                <input type="text" name="smtp_server" value="{{ config.get('smtp_server', '') }}"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                                    placeholder="smtp.example.com">
+                            </div>
+                            <div>
+                                <input type="number" name="smtp_port" value="{{ config.get('smtp_port', '587') }}"
+                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                                    placeholder="587">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="smtp_ssl" name="smtp_ssl" value="true"
+                                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" {% if
+                                config.get('smtp_ssl')=='true' %}checked{% endif %}>
+                            <label for="smtp_ssl" class="text-xs font-medium text-slate-600 cursor-pointer">SSL/TLS
+                                verwenden (z.B. für Port 465)</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Benutzer</label>
+                            <input type="text" name="smtp_user" value="{{ config.get('smtp_user', '') }}"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1">Passwort</label>
+                            <input type="password" name="smtp_password" placeholder="••••••••"
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Admin E-Mail
+                            (Fallback)</label>
+                        <input type="email" name="admin_email" value="{{ config.get('admin_email', '') }}"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                    </div>
+                </div>
+
+                <!-- User Notification Management -->
+                <details class="space-y-4 group/users" {{ 'open' if users|length <=3 else '' }}>
+                    <summary
+                        class="text-sm font-medium text-slate-900 flex items-center justify-between gap-2 cursor-pointer list-none hover:bg-slate-50 p-2 -m-2 rounded-lg transition-colors">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+                            <span>Benutzer-Benachrichtigungen</span>
+                        </div>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 group-open/users:rotate-180"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </summary>
+
+                    <!-- Search Bar -->
+                    <div class="px-1">
+                        <input type="text" id="user-search" onkeyup="filterUsers()" placeholder="Benutzer suchen..."
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-indigo-500 transition-colors">
+                    </div>
+
+                    <div
+                        class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden max-h-64 overflow-y-auto mt-2">
+                        <table class="w-full text-sm text-left">
+                            <thead
+                                class="bg-slate-100 text-slate-600 font-medium border-b border-slate-200 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2">Benutzer / E-Mail</th>
+                                    <th class="px-4 py-2 text-center" title="Bei kritischen Fehlern">Fehler</th>
+                                    <th class="px-4 py-2 text-center" title="Wenn >10 Dokumente warten">Überlast
+                                        (>10)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="user-table-body">
+                                {% for user in users %}
+                                <tr class="hover:bg-white user-row">
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-slate-800">{{ user.display_name or
+                                            user.username }}</div>
+                                        <div class="text-xs text-slate-500">{{ user.email }}</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" name="user_{{ user.id }}_notify_error"
+                                                class="sr-only peer" {{ 'checked' if user.notification_preferences and
+                                                (user.notification_preferences | from_json).get('error') else '' }}>
+                                            <div
+                                                class="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500">
+                                            </div>
+                                        </label>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" name="user_{{ user.id }}_notify_pending"
+                                                class="sr-only peer" {{ 'checked' if user.notification_preferences and
+                                                (user.notification_preferences | from_json).get('pending_overflow')
+                                                else '' }}>
+                                            <div
+                                                class="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500">
+                                            </div>
+                                        </label>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="px-4 py-4 text-center text-slate-500 italic">Keine
+                                        Benutzer gefunden.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-xs text-slate-500 px-1">Einstellungen werden beim Speichern übernommen.</p>
+                </details>
+            </div>
+</div>
+</details>
+
+<!-- 2. OCR & KI Integration -->
+<details id="ocr-settings-section" class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <summary
+        class="flex items-center justify-between p-4 cursor-pointer list-none bg-slate-50 hover:bg-slate-100 transition-colors">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-purple-100 rounded-lg">
+                <i data-lucide="brain" class="w-5 h-5 text-purple-600"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-semibold text-slate-800">OCR Methode & KI Modell (LM Studio)</h2>
+                <p class="text-xs text-slate-500">Verbindung zum lokalen Sprachmodell & Texterkennung</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 group-open:rotate-180" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </summary>
+
+    <div class="p-6 border-t border-slate-200 space-y-6">
+        <!-- Test Section -->
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div class="flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4 text-purple-600"></i>
+                <span class="text-sm text-purple-900" id="lmstudio-status">Nicht geprüft</span>
+            </div>
+            <button type="button" onclick="testLMStudio()"
+                class="text-xs bg-white border border-purple-200 text-purple-700 px-3 py-1.5 rounded hover:bg-purple-50 transition-colors">
+                Verbindung testen
+            </button>
+        </div>
+
+        <!-- LM Studio Config -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">LMStudio API URL</label>
+                <input type="url" name="lmstudio_url" value="{{ config.get('lmstudio_url', 'http://localhost:1234') }}"
+                    class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm"
+                    placeholder="http://localhost:1234">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Modell Name
+                    (Extraktion)</label>
+                <div class="flex gap-2">
+                    <input type="text" name="lmstudio_model" value="{{ config.get('lmstudio_model', '') }}"
+                        list="model-list" id="input-model-text" onfocus="testLMStudio()"
+                        class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm"
+                        placeholder="Leer lassen für Standard">
+                    <button type="button" onclick="loadModel('input-model-text', 'status-model-text')"
+                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors whitespace-nowrap">
+                        Laden
+                    </button>
+                </div>
+                <div id="status-model-text" class="text-xs mt-1 min-h-[1.25em]"></div>
+            </div>
+
+
+        </div>
+
+        <!-- Visual Separator -->
+        <div class="relative py-2">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                <div class="w-full border-t border-slate-200"></div>
+            </div>
+            <div class="relative flex justify-center">
+                <span class="bg-white px-2 text-xs text-slate-400 uppercase tracking-wider font-semibold">OCR
+                    Konfiguration</span>
+            </div>
+        </div>
+
+        <!-- OCR Config -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">OCR Strategie</label>
+                <select name="ocr_strategy"
+                    class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm appearance-none bg-white">
+                    <option value="standard" {{ 'selected' if config.get('ocr_strategy')=='standard' else '' }}>
+                        Standard (Textlayer)</option>
+                    <option value="tesseract" {{ 'selected' if config.get('ocr_strategy')=='tesseract' else '' }}>
+                        Tesseract (Lokal)</option>
+                    <option value="vision" {{ 'selected' if config.get('ocr_strategy')=='vision' else '' }}>
+                        Nur KI Vision (OCR)</option>
+                    <option value="hybrid" {{ 'selected' if config.get('ocr_strategy')=='hybrid' else '' }}>
+                        Hybrid (Text + OCR)</option>
+                </select>
+            </div>
+            <div id="vision-config" class="hidden">
+                <label class="block text-sm font-medium text-slate-700 mb-1">OCR Modell ID (Vision)</label>
+                <div class="flex gap-2">
+                    <input type="text" name="lmstudio_ocr_model" value="{{ config.get('lmstudio_ocr_model', '') }}"
+                        list="model-list" id="input-model-ocr" onfocus="testLMStudio()"
+                        class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm"
+                        placeholder="z.B. german-ocr-2b-gguf">
+                    <button type="button" onclick="loadModel('input-model-ocr', 'status-model-ocr')"
+                        class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition-colors whitespace-nowrap">
+                        Laden
+                    </button>
+                </div>
+                <div id="status-model-ocr" class="text-xs mt-1 min-h-[1.25em]"></div>
+            </div>
+
+            <!-- Datalist for models -->
+            <datalist id="model-list"></datalist>
+
+            <!-- Tesseract Config (Conditional) -->
+            <div class="md:col-span-2 hidden" id="tesseract-config">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tesseract Pfad
+                    (Optional)</label>
+                <div class="flex gap-2">
+                    <input type="text" name="tesseract_cmd" id="tesseract_cmd_input"
+                        value="{{ config.get('tesseract_cmd', '') }}"
+                        class="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-mono"
+                        placeholder="C:\Program Files\Tesseract-OCR\tesseract.exe">
+                    <button type="button" id="btn-tesseract-search" onclick="detectTesseract()"
+                        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        title="Automatisch suchen">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                        <span>Suchen</span>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Pfad zur tesseract.exe. Leer lassen für automatische
+                    Erkennung.</p>
+            </div>
+        </div>
+
+    </div>
+</details>
+
+<!-- 3. System Prompt -->
+<details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <summary
+        class="flex items-center justify-between p-4 cursor-pointer list-none bg-slate-50 hover:bg-slate-100 transition-colors">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-amber-100 rounded-lg">
+                <i data-lucide="message-square" class="w-5 h-5 text-amber-600"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-semibold text-slate-800">KI System-Prompt</h2>
+                <p class="text-xs text-slate-500">Anweisungen für die Dokumentenanalyse</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 group-open:rotate-180" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </summary>
+
+    <div class="p-6 border-t border-slate-200 space-y-4">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-sm font-medium text-slate-700">Prompt Vorlage</label>
+            <div class="flex gap-2">
+                <button type="button" onclick="showLastPrompt()"
+                    class="text-xs text-slate-500 hover:text-indigo-600 px-2 py-1 rounded hover:bg-slate-100">
+                    Letzten Prompt ansehen
+                </button>
+                <button type="button" onclick="resetPrompt()"
+                    class="text-xs text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50">
+                    Reset
+                </button>
+            </div>
+        </div>
+        <textarea name="ai_system_prompt" rows="12"
+            class="w-full px-4 py-3 border border-slate-200 rounded-lg font-mono text-xs leading-relaxed bg-slate-50 focus:bg-white"
+            placeholder="Analysiere das folgende Dokument...">{{ config.get('ai_system_prompt', '') }}</textarea>
+    </div>
+</details>
+
+<!-- 4. IFAS API -->
+<details class="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <summary
+        class="flex items-center justify-between p-4 cursor-pointer list-none bg-slate-50 hover:bg-slate-100 transition-colors">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-100 rounded-lg">
+                <i data-lucide="database" class="w-5 h-5 text-blue-600"></i>
+            </div>
+            <div>
+                <h2 class="text-base font-semibold text-slate-800">IFAS API Integration</h2>
+                <p class="text-xs text-slate-500">Schnittstelle zur Fachanwendung</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-slate-400 transition-transform duration-200 group-open:rotate-180" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </summary>
+
+    <div class="p-6 border-t border-slate-200 space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">API URL</label>
+            <input type="url" name="ifas_api_url" value="{{ config.get('ifas_api_url', '') }}"
+                class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">API User</label>
+                <input type="text" name="ifas_api_user" value="{{ config.get('ifas_api_user', '') }}"
+                    class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">API Password</label>
+                <input type="password" name="ifas_api_password"
+                    placeholder="{{ '••••••••' if config.get('ifas_api_password') else 'Nicht gesetzt' }}"
+                    class="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+            <input type="checkbox" name="ifas_mock_mode" id="mock_mode" {{ 'checked' if config.get('ifas_mock_mode',
+                True) else '' }} class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <label for="mock_mode" class="text-sm text-slate-700">Mock-Modus aktivieren (simuliert
+                API-Antworten)</label>
+        </div>
+    </div>
+</details>
+
+<!-- 5. Betriebsstätten (Link) -->
+<div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+        <div class="p-2 bg-green-100 rounded-lg">
+            <i data-lucide="building-2" class="w-5 h-5 text-green-600"></i>
+        </div>
+        <div>
+            <h2 class="text-base font-semibold text-slate-800">Betriebsstätten</h2>
+            <p class="text-xs text-slate-500">Standorte und Abteilungen verwalten</p>
+        </div>
+    </div>
+    <a href="{{ url_for('admin.betriebe_settings') }}"
+        class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-indigo-600 transition-colors text-sm font-medium shadow-sm">
+        Verwalten &rarr;
+    </a>
+</div>
+
+<!-- Save Button Sticky Footer -->
+<div
+    class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur border-t border-slate-200 p-4 z-40 flex justify-end gap-3 shadow-lg">
+    <div class="max-w-4xl w-full mx-auto flex justify-end gap-3 px-4">
+        <button type="submit"
+            class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-md shadow-indigo-200 flex items-center gap-2 transition-all active:scale-95">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            Einstellungen speichern
+        </button>
+    </div>
+</div>
+
+<div class="h-16"></div> <!-- Spacer for sticky footer -->
+</form>
+</main>
+</div>
+
+<!-- Prompt Inspector Modal -->
+<div id="prompt-modal"
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col m-4 overflow-hidden relative">
+        <div class="flex items-center justify-between p-4 border-b border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800">Letzter generierter Prompt</h3>
+            <button onclick="closePromptModal()" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-hidden relative bg-slate-50">
+            <pre id="prompt-content"
+                class="w-full h-full p-6 overflow-auto text-xs font-mono bg-slate-50 text-slate-700 whitespace-pre-wrap"></pre>
+
+            <button onclick="copyPrompt()"
+                class="absolute top-4 right-6 bg-white shadow-sm border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium transition-all"
+                title="Kopieren">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+                Kopieren
+            </button>
+        </div>
+        <div class="p-4 border-t border-slate-100 bg-white flex justify-end">
+            <button onclick="closePromptModal()"
+                class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+                Schließen
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadModel(inputId, statusId) {
+        const input = document.getElementById(inputId);
+        const status = document.getElementById(statusId);
+        const contextInput = document.querySelector('input[name="lmstudio_context_length"]');
+
+        const modelName = input.value.trim();
+        const contextLength = contextInput ? parseInt(contextInput.value) : 4096;
+
+        if (!modelName) {
+            alert('Bitte geben Sie einen Modellnamen ein.');
+            return;
+        }
+
+        status.innerHTML = '<span class="text-slate-500 animate-pulse">Lade Modell... (5-60s)</span>';
+
+        try {
+            const res = await fetch('/api/llm/load', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    model: modelName,
+                    context_length: contextLength
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                status.innerHTML = `<span class="text-green-600 font-medium">✓ Geladen: ${data.loaded_model}</span>`;
+                // Refresh global status to reflect change
+                testLMStudio();
+            } else {
+                status.innerHTML = `<span class="text-red-500">Fehler: ${data.error}</span>`;
+            }
+        } catch (e) {
+            status.innerHTML = `<span class="text-red-500">Netzwerkfehler: ${e.message}</span>`;
+        }
+    }
+
+    async function testLMStudio() {
+        const statusEl = document.getElementById('lmstudio-status');
+        statusEl.textContent = 'Prüfe Verbindung...';
+        statusEl.className = 'text-sm text-slate-500';
+
+        try {
+            const res = await fetch('/api/llm/status');
+            const data = await res.json();
+
+            if (data.connected) {
+                // Determine text based on loaded model
+                let statusText = 'Verbunden';
+                if (data.loaded_model) {
+                    statusText += ` (Aktiv: ${data.loaded_model})`;
+                    statusEl.className = 'text-sm text-green-600 font-medium';
+                } else {
+                    statusText += ' (Kein Modell aktiv)';
+                    statusEl.className = 'text-sm text-amber-600 font-medium ml-2';
+                }
+                statusEl.textContent = statusText;
+
+                // Populate Datalist
+                const dataList = document.getElementById('model-list');
+                if (dataList && data.models) {
+                    dataList.innerHTML = '';
+                    data.models.forEach(modelId => {
+                        const option = document.createElement('option');
+                        option.value = modelId;
+                        dataList.appendChild(option);
+                    });
+                }
+
+            } else {
+                statusEl.textContent = data.error || 'Keine Verbindung';
+                statusEl.className = 'text-sm text-red-600 font-medium';
+            }
+        } catch (e) {
+            statusEl.textContent = 'Fehler: ' + e.message;
+            statusEl.className = 'text-sm text-red-600 font-medium';
+        }
+    }
+
+
+    function resetPrompt() {
+        if (!confirm('Möchten Sie den System-Prompt wirklich auf den Standardwert zurücksetzen? Ihre Änderungen gehen verloren.')) {
+            return;
+        }
+
+        const defaultPrompt = `Du bist ein intelligenter Assistent für die Posteingangsverarbeitung ("IFAS-Assistent").
+Deine Aufgabe ist es, Dokumente zu analysieren und relevante Daten als JSON zu extrahieren.
+
+--- VERFÜGBARE KATEGORIEN ---
+{categories}
+
+--- DOKUMENT TEXT ---
+{text}
+{attachments}
+
+--- ANWEISUNGEN ---
+1. Analysiere den Dokumententext genau.
+2. Wähle die passendste Kategorie aus der Liste oben.
+   - Wenn der Text eine "Unfallanzeige" ist, wähle KEIN "Mutterschutz".
+   - Wenn es um "Schwangerschaft" oder "Mutterschutz" geht, wähle "Mutterschutzmeldung".
+3. Extrahiere die Daten für die Felder dieser Kategorie.
+   - Gib NIEMALS Keys zurück, die nicht in der Felddefinition stehen.
+   - Formatiere Daten sauber (z.B. Datum als DD.MM.YYYY).
+4. Bestimme die Konfidenz (0.0 bis 1.0).
+   - Sei kritisch. Wenn wichtige Keywords fehlen, gib eine niedrige Konfidenz (< 0.6).
+   - Wenn das Dokument sehr schlecht lesbar ist oder keinen Sinn ergibt, setze Konfidenz < 0.3.
+
+Antworte AUSSCHLIESSLICH mit einem JSON-Objekt in diesem Format:
+{
+    "category_id": <ID der Kategorie oder null>,
+    "confidence": <float 0.0-1.0>,
+    "summary": "<Kurze Zusammenfassung des Inhalts>",
+    "extracted_data": {
+        "<feld_key>": "<wert>",
+        ...
+    }
+}`;
+
+        document.querySelector('textarea[name="ai_system_prompt"]').value = defaultPrompt;
+    }
+
+    async function showLastPrompt() {
+        const modal = document.getElementById('prompt-modal');
+        const content = document.getElementById('prompt-content');
+
+        content.textContent = 'Lade...';
+        modal.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/admin/settings/get-last-prompt');
+            const data = await res.json();
+
+            if (data.success) {
+                content.textContent = data.content;
+            } else {
+                content.textContent = 'Fehler: ' + data.error;
+            }
+        } catch (e) {
+            content.textContent = 'Fehler beim Laden: ' + e.message;
+        }
+    }
+
+    function closePromptModal() {
+        document.getElementById('prompt-modal').classList.add('hidden');
+    }
+
+    function copyPrompt() {
+        const text = document.getElementById('prompt-content').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Prompt in die Zwischenablage kopiert!');
+        });
+    }
+
+    // Ensure icons are rendered
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+    });
+
+    function filterUsers() {
+        const input = document.getElementById('user-search');
+        const filter = input.value.toLowerCase();
+        const rows = document.getElementsByClassName('user-row');
+
+        for (let i = 0; i < rows.length; i++) {
+            const nameCol = rows[i].getElementsByTagName('td')[0];
+            if (nameCol) {
+                const txtValue = nameCol.textContent || nameCol.innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    // Tesseract & Vision Logic
+    document.addEventListener('DOMContentLoaded', () => {
+        const strategySelect = document.querySelector('select[name="ocr_strategy"]');
+        const tesseractConfig = document.getElementById('tesseract-config');
+        const visionConfig = document.getElementById('vision-config');
+
+        function updateOCRVisibility() {
+            const val = strategySelect.value;
+
+            // Tesseract
+            if (val === 'tesseract') {
+                tesseractConfig.classList.remove('hidden');
+            } else {
+                tesseractConfig.classList.add('hidden');
+            }
+
+            // Vision / Hybrid
+            if (val === 'vision' || val === 'hybrid') {
+                visionConfig.classList.remove('hidden');
+            } else {
+                visionConfig.classList.add('hidden');
+            }
+        }
+
+        if (strategySelect) {
+            strategySelect.addEventListener('change', updateOCRVisibility);
+            updateOCRVisibility(); // Initial check
+        }
+    });
+
+    async function detectTesseract() {
+        const input = document.getElementById('tesseract_cmd_input');
+        const btn = document.getElementById('btn-tesseract-search');
+        if (!btn) return;
+
+        const originalHtml = btn.innerHTML;
+
+        try {
+            // Show loading state
+            btn.innerHTML = '<span>Suche...</span>';
+            btn.disabled = true;
+
+            const res = await fetch('/admin/settings/detect-tesseract');
+            if (!res.ok) throw new Error('Netzwerk-Fehler');
+
+            const data = await res.json();
+
+            if (data.found && data.path) {
+                input.value = data.path;
+                alert('Tesseract gefunden: ' + data.path);
+            } else {
+                alert('Tesseract konnte nicht automatisch gefunden werden. Bitte Pfad manuell eingeben.');
+            }
+        } catch (e) {
+            alert('Fehler bei der Suche: ' + e.message);
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+            // Re-render icons if possible
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+    }
+</script>
+
+<!-- Auto-open settings section based on hash -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.location.hash) {
+            const targetId = window.location.hash.substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement && targetElement.tagName === 'DETAILS') {
+                targetElement.open = true;
+                // Small delay to ensure layout is ready
+                setTimeout(() => {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+    });
+</script>
+{% endblock %}

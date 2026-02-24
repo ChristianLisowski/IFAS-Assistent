@@ -1,0 +1,1609 @@
+{% extends "base.html" %}
+
+{% block title %}Validierung - IFAS-Assistent{% endblock %}
+
+{% block head %}
+<style>
+    /* Three-column layout */
+    .validation-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr 420px;
+        height: calc(100vh - 64px);
+    }
+
+    /* PDF Viewer */
+    #pdf-canvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Custom scrollbar utility */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 20px;
+    }
+</style>
+
+{% set mode = app_config.get('theme_mode', 'light') if app_config else 'light' %}
+
+{% if mode == 'dark' %}
+<style>
+    /* Dark mode overrides for validation page */
+    .validation-layout aside {
+        background-color: rgba(30, 41, 59, 0.95) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .validation-layout main {
+        background-color: rgba(15, 23, 42, 0.6) !important;
+    }
+
+    .validation-layout .doc-list a {
+        border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .validation-layout .doc-list a:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .validation-layout .doc-list a.bg-blue-50 {
+        background-color: rgba(56, 189, 248, 0.15) !important;
+        border-color: rgba(56, 189, 248, 0.3) !important;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* LLM status bar in dark mode */
+    #llm-status-display {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Preview header */
+    .validation-layout main .bg-white {
+        background-color: rgba(30, 41, 59, 0.95) !important;
+    }
+
+    /* Category badges and status pills */
+    .bg-slate-100.text-slate-600 {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #94a3b8 !important;
+    }
+
+    .bg-primary-50 {
+        background-color: rgba(14, 165, 233, 0.15) !important;
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="h-screen flex flex-col overflow-hidden">
+    <!-- Top Navigation -->
+    <nav class="glass border-b border-slate-200 shrink-0 z-50">
+        <div class="px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="block">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"
+                            class="w-14 h-14 object-contain rounded-xl"
+                            onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25\'><i data-lucide=\'file-check\' class=\'w-7 h-7 text-white\'></i></div>'">
+                    </a>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-800">IFAS-Assistent</h1>
+                        <p class="text-xs text-slate-500">Dokumentenvalidierung</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <a href="{{ url_for('main.dashboard') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('main.validation') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-700 font-medium">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                        Validierung
+                        <span id="global-validation-badge"
+                            class="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full ml-1 {% if ready_count == 0 %}hidden{% endif %}">
+                            {{ ready_count }}
+                        </span>
+                    </a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.index') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Admin
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- LLM Indicator -->
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200"
+                        id="llm-status-display">
+                        <div class="w-2 h-2 rounded-full bg-slate-400" id="llm-indicator"></div>
+                        <span class="text-xs font-medium text-slate-600" id="llm-text">Prüfe KI...</span>
+                    </div>
+
+                    <div class="h-6 w-px bg-slate-200"></div>
+
+
+
+                    <!-- Logout -->
+                    <a href="{{ url_for('auth.logout') }}"
+                        class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Abmelden">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="w-5 h-5">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" x2="9" y1="12" y2="12" />
+                        </svg>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content - Three Column Layout -->
+    <div class="validation-layout flex-1 min-h-0">
+        <!-- Left Sidebar - Document List -->
+        <aside class="bg-white border-r border-slate-200 flex flex-col h-full min-h-0">
+            <!-- Filters -->
+            <div class="p-4 border-b border-slate-100 space-y-3">
+                <div class="relative">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-input" placeholder="Dokument suchen..." value="{{ search_query }}"
+                        class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                </div>
+
+                <div class="flex gap-2">
+                    <select id="filter-status"
+                        class="flex-1 py-1.5 px-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                        <option value="pending" {{ 'selected' if filter_status=='pending' }}>Offen</option>
+                        <option value="ready" {{ 'selected' if filter_status=='ready' }}>Bereit</option>
+                        <option value="rejected" {{ 'selected' if filter_status=='rejected' }}>Verworfen</option>
+                        <option value="transferred" {{ 'selected' if filter_status=='transferred' }}>Übertragen</option>
+                        <option value="all" {{ 'selected' if filter_status=='all' }}>Alle</option>
+                    </select>
+                    <select id="filter-category"
+                        class="flex-1 py-1.5 px-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                        <option value="">Kategorie...</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {{ 'selected' if filter_category==cat.id|string }}>{{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto doc-list custom-scrollbar min-h-0" id="document-list">
+                {% for doc in documents %}
+                <a href="{{ url_for('main.validation', doc=doc.id, status=filter_status, category=filter_category, q=search_query) }}"
+                    class="block p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors {{ 'bg-blue-50 border-blue-200' if selected_document and selected_document.id == doc.id else '' }} relative group"
+                    onclick="saveScrollPosition()">
+                    <div class="flex items-start justify-between mb-1">
+                        <h3 class="font-medium text-slate-800 line-clamp-1 pr-6">{{ doc.email_subject or doc.filename }}
+                        </h3>
+                        {% if doc.status == 'ready' %}
+                        <span class="w-2 h-2 rounded-full bg-green-500 mt-2 shrink-0"></span>
+                        {% elif doc.status == 'transferred' %}
+                        <span class="w-2 h-2 rounded-full bg-blue-500 mt-2 shrink-0"></span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-slate-500 mb-2 truncate">{{ doc.email_from or 'Unbekannter Absender' }}</p>
+                    <div class="flex items-center justify-between">
+                        <span
+                            class="text-xs px-2 py-0.5 rounded-full {{ 'bg-slate-100 text-slate-600' if not doc.category else 'bg-blue-100 text-blue-700' }}">
+                            {{ doc.category.name if doc.category else 'Nicht kategorisiert' }}
+                        </span>
+                        <span class="text-xs text-slate-400">{{ doc.received_at.strftime('%d.%m. %H:%M') }}</span>
+                    </div>
+
+                    <!-- Delete Button (only for non-transferred or if admin) -->
+                    {% if doc.status != 'transferred' or current_user.is_admin %}
+                    <button data-id="{{ doc.id }}" onclick="deleteDocument(event, this.dataset.id)"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg {{ 'opacity-0 group-hover:opacity-100' if doc.status != 'rejected' else '' }} transition-all"
+                        title="Dokument löschen">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                    {% endif %}
+                </a>
+                {% else %}
+                <div class="p-8 text-center">
+                    <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="inbox" class="w-6 h-6 text-slate-300"></i>
+                    </div>
+                    <p class="text-slate-500">Keine Dokumente gefunden</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Debug Data View -->
+            {% if current_user.is_admin %}
+            <div class="p-2 border-t border-slate-200 bg-slate-50">
+                <div class="text-xs font-bold text-slate-500 mb-1">Debug: Extracted Data</div>
+                <pre id="debug-extracted-data"
+                    class="whitespace-pre-wrap font-mono text-[10px] text-slate-600 bg-white p-1 rounded border border-slate-200 h-32 overflow-auto">Loading...</pre>
+
+                <a href="{{ url_for('main.dashboard') }}"
+                    class="flex items-center text-xs text-slate-500 hover:text-slate-800 transition-colors mt-2">
+                    <i data-lucide="arrow-left" class="w-3 h-3 mr-1"></i>
+                    Zurück zum Dashboard
+                </a>
+            </div>
+            {% else %}
+            <div class="p-4 border-t border-slate-200">
+                <a href="{{ url_for('main.dashboard') }}"
+                    class="flex items-center text-sm text-slate-500 hover:text-slate-800 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                    Zurück zum Dashboard
+                </a>
+            </div>
+            {% endif %}
+        </aside>
+
+        <!-- Center - Document Preview -->
+        <main class="bg-slate-100 flex flex-col overflow-hidden relative">
+            {% if selected_document %}
+            <!-- Preview Header -->
+            <div
+                class="bg-white border-b border-slate-200 p-2 sm:p-4 flex items-center justify-between shrink-0 z-10 shadow-sm">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <h2 class="font-semibold text-slate-800 truncate">{{ selected_document.filename }}</h2>
+                    {% if selected_document.page_count %}
+                    <span class="text-xs px-2 py-0.5 bg-slate-100 rounded text-slate-500 shrink-0">{{
+                        selected_document.page_count }} Seiten</span>
+                    {% endif %}
+                </div>
+                <!-- Controls: Page Nav + Zoom -->
+                <div class="flex items-center gap-3">
+                    <!-- Page Navigation -->
+                    {% if selected_document.mime_type and 'pdf' in selected_document.mime_type %}
+                    <div class="flex items-center bg-slate-100 rounded-lg p-0.5">
+                        <button id="prev-page"
+                            class="p-1.5 hover:bg-white rounded-md text-slate-600 disabled:opacity-50"
+                            title="Vorherige Seite">
+                            <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                        </button>
+                        <span id="page-indicator" class="text-xs font-mono w-16 text-center text-slate-600">1 / {{
+                            selected_document.page_count or '?' }}</span>
+                        <button id="next-page"
+                            class="p-1.5 hover:bg-white rounded-md text-slate-600 disabled:opacity-50"
+                            title="Nächste Seite">
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="w-px h-6 bg-slate-200"></div>
+                    {% endif %}
+
+                    <!-- Zoom -->
+                    <div class="flex items-center gap-1">
+                        <button id="zoom-out" class="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+                            title="Verkleinern">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="w-4 h-4">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                                <line x1="8" x2="14" y1="11" y2="11" />
+                            </svg>
+                        </button>
+                        <span id="zoom-level" class="text-xs font-medium text-slate-600 w-10 text-center">100%</span>
+                        <button id="zoom-in" class="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+                            title="Vergrößern">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="w-4 h-4">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" x2="16.65" y1="21" y2="16.65" />
+                                <line x1="11" x2="11" y1="8" y2="14" />
+                                <line x1="8" x2="14" y1="11" y2="11" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Content -->
+            <div id="preview-container" class="flex-1 overflow-auto p-4 scroll-smooth"
+                data-doc-id="{{ selected_document.id if selected_document else '' }}"
+                data-mime-type="{{ selected_document.mime_type if selected_document else '' }}">
+                {% if 'pdf' in (selected_document.mime_type or '') %}
+                <div id="pdf-viewer" class="bg-white rounded-lg shadow-sm mx-auto max-w-4xl">
+                    <canvas id="pdf-canvas"></canvas>
+                </div>
+                {% else %}
+                <!-- Text/Email Preview -->
+                <div class="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">
+                    {% if selected_document.email_subject %}
+                    <div class="border-b border-slate-200 pb-4 mb-4">
+                        <h3 class="text-lg font-semibold text-slate-800">{{ selected_document.email_subject }}</h3>
+                        <p class="text-sm text-slate-500 mt-1">Von: {{ selected_document.email_from }}</p>
+                        {% if selected_document.email_date %}
+                        <p class="text-sm text-slate-500">Datum: {{ selected_document.email_date.strftime('%d.%m.%Y
+                            %H:%M') }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <pre
+                        class="whitespace-pre-wrap text-sm text-slate-700 font-sans">{{ selected_document.raw_text or 'Kein Text verfügbar' }}</pre>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Attachments Bar -->
+            {% if selected_document.attachments.count() > 0 %}
+            <div class="bg-white border-t border-slate-200 p-3">
+                <div class="flex items-center gap-3 overflow-x-auto">
+                    <span class="text-sm text-slate-500 flex-shrink-0">Anhänge:</span>
+                    {% for att in selected_document.attachments %}
+                    <a href="{{ url_for('main.view_attachment', doc_id=selected_document.id, att_id=att.id) }}"
+                        target="_blank"
+                        class="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all flex-shrink-0">
+                        <i data-lucide="paperclip" class="w-4 h-4 text-slate-500"></i>
+                        <span class="text-sm text-slate-700 truncate max-w-xs">{{ att.filename }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="flex-1 flex items-center justify-center">
+                <div class="text-center">
+                    <i data-lucide="file-search" class="w-16 h-16 mx-auto text-slate-300 mb-4"></i>
+                    <p class="text-lg font-medium text-slate-600">Kein Dokument ausgewählt</p>
+                    <p class="text-sm text-slate-500 mt-1">Wählen Sie ein Dokument aus der Liste</p>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+
+        <!-- Right Sidebar - Form -->
+        <aside class="bg-white border-l border-slate-200 flex flex-col overflow-hidden">
+            {% if selected_document %}
+            <!-- Category Selection -->
+            <div class="p-4 border-b border-slate-100">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Kategorie</label>
+                <select id="category-select"
+                    class="w-full py-2.5 px-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                    <option value="">Kategorie wählen...</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {{ 'selected' if selected_document.category_id==cat.id }}>
+                        {{ cat.icon }} {{ cat.display_name or cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if selected_document.ai_confidence %}
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <i data-lucide="brain" class="w-3 h-3"></i>
+                    KI-Konfidenz: {{ (selected_document.ai_confidence * 100)|round }}%
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Betriebsstätte Search -->
+            <div class="p-4 border-b border-slate-100">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Betriebsstätte</label>
+
+                <!-- Search Container -->
+                <div id="betrieb-search-container" class="relative {{ 'hidden' if selected_document.ifas_bs_nr }}">
+                    <i data-lucide="building-2"
+                        class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="betrieb-search" placeholder="Name, BS-Nr. oder Adresse..."
+                        class="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                    <div id="betrieb-results"
+                        class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+                    </div>
+                </div>
+
+                <!-- Selected Display -->
+                <div id="selected-betrieb" class="mt-0 {{ 'hidden' if not selected_document.ifas_bs_nr }}">
+                    <div
+                        class="p-3 bg-green-50 border border-green-200 rounded-lg flex items-start justify-between group">
+                        <div>
+                            <p class="text-sm font-medium text-green-800" id="betrieb-name">
+                                {{ selected_document.extracted_data.get('betriebsstaette', 'Betriebsstätte ausgewählt')
+                                if selected_document.extracted_data else 'Betriebsstätte ausgewählt' }}
+                            </p>
+                            <p class="text-xs text-green-600" id="betrieb-info">BS-Nr: {{ selected_document.ifas_bs_nr
+                                }}</p>
+                        </div>
+                        <button onclick="resetBetrieb()"
+                            class="p-1 text-green-600 hover:bg-green-100 rounded opacity-60 hover:opacity-100 transition-opacity"
+                            title="Auswahl ändern">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Hidden Input for Form Submission -->
+                <input type="hidden" id="betrieb-bs-nr" value="{{ selected_document.ifas_bs_nr or '' }}">
+            </div>
+
+            <!-- Dynamic Form Fields -->
+            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div id="form-fields" class="space-y-4">
+                    {% if selected_document.category %}
+                    {% set extracted = selected_document.get_extracted_data() %}
+                    {% for field in selected_document.category.fields if field.show_in_validation %}
+                    <div class="form-field" data-key="{{ field.key }}">
+                        {% set is_uncertain = field.key in extracted.get('_meta', {}).get('uncertain_fields', []) %}
+                        <label class="block text-sm font-medium text-slate-700 mb-1 flex items-center justify-between">
+                            <span>
+                                {{ field.label }}
+                                {% if field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </span>
+                            {% if is_uncertain %}
+                            <span
+                                class="text-xs text-amber-600 font-normal flex items-center gap-1 bg-amber-50 px-1.5 py-0.5 rounded">
+                                <i data-lucide="alert-circle" class="w-3 h-3"></i> Unsicher
+                            </span>
+                            {% endif %}
+                        </label>
+                        {% set input_classes = "w-full px-3 py-2 border rounded-lg text-sm focus:ring-2
+                        focus:ring-primary-500 outline-none" %}
+                        {% if is_uncertain %}
+                        {% set input_classes = input_classes ~ " border-amber-300 bg-amber-50" %}
+                        {% else %}
+                        {% set input_classes = input_classes ~ " border-slate-200" %}
+                        {% endif %}
+
+                        {% if field.field_type == 'textarea' %}
+                        <textarea name="{{ field.key }}" rows="3" class="{{ input_classes }} resize-none"
+                            placeholder="{{ field.placeholder or '' }}">{{ extracted.get(field.key, '') }}</textarea>
+                        {% elif field.field_type == 'select' %}
+                        <select name="{{ field.key }}" class="{{ input_classes }}">
+                            <option value="">Bitte wählen...</option>
+                            {% for opt in field.get_options_list() %}
+                            <option value="{{ opt }}" {{ 'selected' if extracted.get(field.key)==opt }}>{{ opt }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% elif field.field_type == 'date' %}
+                        <input type="date" name="{{ field.key }}" value="{{ extracted.get(field.key, '') }}"
+                            class="{{ input_classes }}">
+                        {% else %}
+                        <input type="{{ 'number' if field.field_type == 'number' else 'text' }}" name="{{ field.key }}"
+                            value="{{ extracted.get(field.key, '') }}" placeholder="{{ field.placeholder or '' }}"
+                            class="{{ input_classes }}">
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-8 text-slate-500">
+                        <i data-lucide="list" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+                        <p class="text-sm">Wählen Sie eine Kategorie, um die Formularfelder anzuzeigen</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="p-4 border-t border-slate-200 flex justify-end gap-2">
+                <button id="btn-analyze" title="KI-Analyse starten"
+                    class="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-all flex items-center justify-center shadow-sm w-10 h-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-5 h-5">
+                        <path
+                            d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+                        <path
+                            d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+                        <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
+                        <path d="M17.59 7a2.8 2.8 0 0 0-2.83 2.82c0 .34.06.67.16.98a4.5 4.5 0 0 0-4.99 4.13V18" />
+                    </svg>
+                </button>
+                <button id="btn-reject" title="Verwerfen" onclick="openRejectModal()"
+                    class="p-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg transition-all flex items-center justify-center w-10 h-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-5 h-5">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        <line x1="10" x2="10" y1="11" y2="17" />
+                        <line x1="14" x2="14" y1="11" y2="17" />
+                    </svg>
+                </button>
+                <button id="btn-transfer" title="Nach IFAS übertragen"
+                    class="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all flex items-center justify-center shadow-sm w-10 h-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-5 h-5">
+                        <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                </button>
+            </div>
+            {% else %}
+            <div class="flex-1 flex items-center justify-center p-4">
+                <div class="text-center">
+                    <i data-lucide="form-input" class="w-12 h-12 mx-auto text-slate-300 mb-3"></i>
+                    <p class="text-slate-500">Wählen Sie ein Dokument zur Bearbeitung</p>
+                </div>
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+</div>
+
+
+
+<!-- Reject Modal -->
+<div id="reject-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative">
+        <button onclick="closeRejectModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+
+        <div class="p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-red-600 w-8 h-8">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-800 mb-2">Dokument verwerfen</h3>
+            <p class="text-slate-500 mb-6">Möchten Sie dieses Dokument wirklich verwerfen? Sie haben zwei Möglichkeiten:
+            </p>
+
+            <div class="space-y-3">
+                <button onclick="confirmReject('discard')"
+                    class="w-full flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all group text-left">
+                    <div>
+                        <div class="font-semibold text-slate-700">Aus Liste entfernen (Verwerfen)</div>
+                        <div class="text-xs text-slate-500 mt-1">Das Dokument wird aus der App entfernt, verbleibt aber
+                            im
+                            Quellordner/Posteingang.</div>
+                    </div>
+                </button>
+
+                <button onclick="confirmReject('delete')" id="btn-reject-delete-option"
+                    class="w-full flex items-center justify-between p-4 border border-red-200 bg-red-50/50 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all text-left">
+                    <div>
+                        <div class="font-semibold text-red-700">Endgültig Löschen</div>
+                        <div class="text-xs text-red-600/70 mt-1">Das Dokument wird <b>unwiderruflich</b> aus der Quelle
+                            (Ordner) gelöscht.</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BS Creation Modal -->
+<div id="bs-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-semibold text-slate-800">Neue Betriebsstätte anlegen</h3>
+            <button onclick="closeBSModal()"
+                class="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="p-6 max-h-[70vh] overflow-y-auto" id="bs-modal-body">
+            <form id="bs-form" class="space-y-4">
+                <!-- Fields will be injected here -->
+                <div class="text-center text-slate-500">
+                    <div class="spinner mx-auto mb-2"></div>
+                    Lade Formularfelder...
+                </div>
+            </form>
+        </div>
+        <div class="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+            <button onclick="closeBSModal()"
+                class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">Abbrechen</button>
+            <button onclick="submitBS()"
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors shadow-lg shadow-primary-500/25">Speichern
+                & Übernehmen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="notification"
+    class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+    <div class="bg-white rounded-lg shadow-xl border border-slate-200 p-4 flex items-center gap-3 max-w-md">
+        <div class="notification-icon"></div>
+        <div>
+            <p class="font-medium text-slate-800 notification-title"></p>
+            <p class="text-sm text-slate-500 notification-message"></p>
+        </div>
+        <button onclick="hideNotification()" class="p-1 hover:bg-slate-100 rounded">
+            <i data-lucide="x" class="w-4 h-4 text-slate-400"></i>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="extracted-data-json" type="application/json">
+    {{ selected_document.get_extracted_data()|tojson|safe if selected_document and selected_document.get_extracted_data() else '{}' }}
+</script>
+<script>
+    // Document ID and Mime Type from DOM
+    const previewContainer = document.getElementById('preview-container');
+    const docId = previewContainer?.dataset.docId || null;
+    const docMimeType = previewContainer?.dataset.mimeType || '';
+
+    // Global Extracted Data for validation logic
+    // Global Extracted Data for validation logic
+    let globalExtractedData = {};
+    try {
+        const dataElement = document.getElementById('extracted-data-json');
+        if (dataElement) {
+            globalExtractedData = JSON.parse(dataElement.textContent);
+
+            // Debug Output
+            const debugEl = document.getElementById('debug-extracted-data');
+            if (debugEl) {
+                debugEl.textContent = JSON.stringify(globalExtractedData, null, 2);
+            }
+        }
+    } catch (e) {
+        console.error("Failed to parse extracted data", e);
+    }
+
+    // Filter Logic - ADDED FIX
+    const filterStatus = document.getElementById('filter-status');
+    const filterCategory = document.getElementById('filter-category');
+    const searchInput = document.getElementById('search-input');
+
+    function updateFilters() {
+        const status = filterStatus ? filterStatus.value : 'pending';
+        const category = filterCategory ? filterCategory.value : '';
+        const search = searchInput ? searchInput.value : '';
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('status', status);
+        if (category) {
+            url.searchParams.set('category', category);
+        } else {
+            url.searchParams.delete('category');
+        }
+        if (search) {
+            url.searchParams.set('q', search);
+        } else {
+            url.searchParams.delete('q');
+        }
+        // Keep selected doc if possible, or clear it to avoid mismatches
+        // url.searchParams.delete('doc'); 
+
+        window.location.href = url.toString();
+    }
+
+    if (filterStatus) filterStatus.addEventListener('change', updateFilters);
+    if (filterCategory) filterCategory.addEventListener('change', updateFilters);
+
+    // Search delay
+    let docSearchTimeout;
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(docSearchTimeout);
+            docSearchTimeout = setTimeout(updateFilters, 500);
+        });
+        // Focus search if it has a value
+        if (searchInput.value) {
+            searchInput.focus();
+            // Move cursor to end
+            const val = searchInput.value;
+            searchInput.value = '';
+            searchInput.value = val;
+        }
+    }
+
+    // Scroll Position Persistence
+    document.addEventListener("DOMContentLoaded", function () {
+        const list = document.getElementById('document-list');
+        const savedPos = sessionStorage.getItem('docListScrollPos');
+        if (list && savedPos) {
+            list.scrollTop = savedPos;
+        }
+    });
+
+    function saveScrollPosition() {
+        const list = document.getElementById('document-list');
+        if (list) {
+            sessionStorage.setItem('docListScrollPos', list.scrollTop);
+        }
+    }
+
+    // System Reset Function
+    window.resetSystem = async function () {
+        if (!confirm('ACHTUNG: Möchten Sie wirklich alle Dokumente aus der Datenbank löschen und neu einlesen? Dieser Vorgang kann nicht rückgängig gemacht werden.')) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/documents/reset', { method: 'POST' });
+            const data = await res.json();
+
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Fehler: ' + data.error);
+            }
+        } catch (e) {
+            alert('Netzwerkfehler: ' + e.message);
+        }
+    };
+
+    // Initialize PDF viewer
+    if (docId && docMimeType.includes('pdf')) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let scale = 1.25;
+
+        // Render Function
+        let currentPage = 1;
+        let totalPages = 0; // Initialize totalPages here
+
+        pdfjsLib.getDocument('/document/' + docId + '/view').promise.then(doc => {
+            pdfDoc = doc;
+            totalPages = pdfDoc.numPages; // Assign totalPages here
+            document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+
+            // Update total pages in indicator
+            const indicator = document.getElementById('page-indicator');
+            if (indicator) indicator.textContent = `1 / ${totalPages}`;
+
+            renderAllPages();
+            updateNavState(); // Call this after initial render and totalPages is known
+        }).catch(err => {
+            console.error('Error loading PDF:', err);
+            document.getElementById('pdf-viewer').innerHTML = '<p class="p-4 text-red-600">PDF konnte nicht geladen werden</p>';
+        });
+
+        function renderAllPages() {
+            const container = document.getElementById('pdf-viewer');
+            container.innerHTML = ''; // Clear existing canvases
+
+            for (let num = 1; num <= totalPages; num++) {
+                const canvas = document.createElement('canvas');
+                canvas.id = `pdf-canvas-${num}`;
+                canvas.className = 'mb-4 shadow-sm w-full'; // Add spacing
+                canvas.dataset.pageNumber = num;
+                container.appendChild(canvas);
+
+                renderPage(num, canvas);
+            }
+        }
+
+        function renderPage(num, canvas) {
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: scale });
+                const ctx = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                });
+            });
+        }
+
+        // Navigation Logic
+        function updateNavState() {
+            document.getElementById('prev-page').disabled = currentPage <= 1;
+            document.getElementById('next-page').disabled = currentPage >= totalPages;
+            const indicator = document.getElementById('page-indicator');
+            if (indicator) indicator.textContent = `${currentPage} / ${totalPages}`;
+        }
+
+        document.getElementById('prev-page')?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                document.getElementById(`pdf-canvas-${currentPage}`)?.scrollIntoView({ behavior: 'smooth' });
+                updateNavState();
+            }
+        });
+
+        document.getElementById('next-page')?.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                document.getElementById(`pdf-canvas-${currentPage}`)?.scrollIntoView({ behavior: 'smooth' });
+                updateNavState();
+            }
+        });
+
+        // Update current page on scroll
+        document.getElementById('preview-container')?.addEventListener('scroll', (e) => {
+            const container = e.target;
+            const canvases = container.querySelectorAll('canvas');
+
+            for (const canvas of canvases) {
+                const rect = canvas.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                // If top of canvas is within the container's view (approx middle)
+                if (rect.top >= containerRect.top - rect.height / 2 && rect.top < containerRect.bottom) {
+                    const newPage = parseInt(canvas.dataset.pageNumber);
+                    if (newPage !== currentPage) {
+                        currentPage = newPage;
+                        updateNavState();
+                    }
+                    break;
+                }
+            }
+        });
+
+        document.getElementById('zoom-in')?.addEventListener('click', () => {
+            scale = Math.min(scale + 0.25, 3);
+            document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+            renderAllPages();
+        });
+
+        document.getElementById('zoom-out')?.addEventListener('click', () => {
+            scale = Math.max(scale - 0.25, 0.5);
+            document.getElementById('zoom-level').textContent = Math.round(scale * 100) + '%';
+            renderAllPages();
+        });
+
+    }
+
+    // Check LLM status
+    fetch('/api/llm/status')
+        .then(r => r.json())
+        .then(data => {
+            const indicator = document.getElementById('llm-indicator');
+            const text = document.getElementById('llm-text');
+            if (data.connected) {
+                indicator.className = 'w-2 h-2 rounded-full bg-green-500';
+                text.textContent = 'KI bereit';
+            } else {
+                indicator.className = 'w-2 h-2 rounded-full bg-red-500';
+                text.textContent = 'KI offline';
+            }
+        });
+
+
+
+    // Robust Search Listener using Delegation
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.id === 'betrieb-search') {
+            handleSearchInput(e.target);
+        }
+    });
+
+    let searchTimeout;
+    function handleSearchInput(inputEl) {
+        clearTimeout(searchTimeout);
+        const query = inputEl.value;
+        const results = document.getElementById('betrieb-results');
+
+        if (query.length < 2) {
+            if (results) results.classList.add('hidden');
+            // Remove any existing prompts
+            const container = document.getElementById('betrieb-search-container');
+            const existingPrompts = container?.querySelectorAll('.prompt-box');
+            if (existingPrompts) existingPrompts.forEach(p => p.remove());
+            return;
+        }
+
+        searchTimeout = setTimeout(async () => {
+            if (!results) return;
+
+            try {
+                const res = await fetch('/api/betriebe/search?q=' + encodeURIComponent(query));
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                console.log("Search results:", data);
+
+                // Clear previous results
+                let html = '';
+
+                if (data.length > 0) {
+                    html = data.map(b => `
+                    <div class="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0" onclick='selectBetrieb(${JSON.stringify(b).replace(/'/g, "&#39;")})'>
+                        <p class="font-medium text-slate-800">${b.name}</p>
+                        <p class="text-xs text-slate-500">${b.bs_nr} • ${b.strasse}, ${b.plz} ${b.ort}</p>
+                    </div>
+                    `).join('');
+                } else {
+                    html = '<p class="p-3 text-sm text-slate-500">Keine Ergebnisse in IFAS</p>';
+                }
+
+                // Always append the "Create New" option
+                html += `
+                    <div class="p-3 bg-indigo-50 hover:bg-indigo-100 cursor-pointer border-t border-indigo-100 text-indigo-700 flex items-center gap-2" onclick="openBSModal()">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span class="font-medium text-sm">"${query}" neu anlegen</span>
+                    </div>
+                `;
+
+                results.innerHTML = html;
+                results.classList.remove('hidden');
+
+                // Re-initialize icons
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+            } catch (e) {
+                console.error("Search error:", e);
+                results.innerHTML = `<p class="p-3 text-sm text-red-500">Fehler: ${e.message}</p>`;
+                results.classList.remove('hidden');
+            }
+
+        }, 300);
+    }
+
+    // Helper used by onclick
+    window.selectBetrieb = function (b) { // Expose to window for inline onclick to work
+        selectBetriebInternal(b);
+    };
+
+    // BS Modal Logic
+    async function openBSModal(prefillData = {}) {
+        const modal = document.getElementById('bs-modal');
+        const body = document.getElementById('bs-form');
+        const searchInput = document.getElementById('betrieb-search');
+
+        modal.classList.remove('hidden');
+        document.getElementById('betrieb-results').classList.add('hidden'); // Ensure results are closed
+
+        // Use prefillData if provided, otherwise use current search term as name
+        const initialData = { ...prefillData };
+        if (!initialData.name && searchInput && searchInput.value.length > 2) {
+            initialData.name = searchInput.value;
+        }
+
+        try {
+            // Fetch form config from new endpoint
+            const res = await fetch('/api/betriebe/form-config');
+            const fields = await res.json();
+
+            if (fields && fields.length > 0) {
+                let html = '';
+                // Group fields if they have width properties
+                let currentRowBuffer = [];
+
+                fields.forEach((f, index) => {
+                    const widthClass = f.width || 'w-full';
+                    const isFullWidth = widthClass === 'w-full';
+                    const value = initialData[f.key] || '';
+
+                    const fieldHtml = `
+                        <div class="${widthClass}">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                ${f.label} ${f.required ? '*' : ''}
+                            </label>
+                            <input type="${f.field_type || 'text'}" name="${f.key}" 
+                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none"
+                                placeholder="${f.placeholder || ''}" 
+                                value="${value}"
+                                ${f.required ? 'required' : ''}>
+                        </div>`;
+
+                    if (isFullWidth) {
+                        // Close any open row
+                        if (currentRowBuffer.length > 0) {
+                            html += `<div class="flex gap-3 mb-3">${currentRowBuffer.join('')}</div>`;
+                            currentRowBuffer = [];
+                        }
+                        html += `<div class="mb-3">${fieldHtml}</div>`;
+                    } else {
+                        currentRowBuffer.push(fieldHtml);
+                        // If next field is full width or end of list, close row
+                        const nextField = fields[index + 1];
+                        if (!nextField || (nextField.width && nextField.width === 'w-full') || !nextField.width) {
+                            html += `<div class="flex gap-3 mb-3">${currentRowBuffer.join('')}</div>`;
+                            currentRowBuffer = [];
+                        }
+                    }
+                });
+                // flush buffer
+                if (currentRowBuffer.length > 0) {
+                    html += `<div class="flex gap-3 mb-3">${currentRowBuffer.join('')}</div>`;
+                }
+
+                body.innerHTML = html;
+            } else {
+                body.innerHTML = renderDefaultBSFields(initialData);
+            }
+
+        } catch (e) {
+            console.error("Config fetch error:", e);
+            body.innerHTML = renderDefaultBSFields(initialData);
+        }
+    }
+
+    function renderDefaultBSFields(data = {}) {
+        return `
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+                <input type="text" name="name" required value="${data.name || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Straße</label>
+                <input type="text" name="strasse" value="${data.strasse || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1"><label class="block text-sm font-medium text-slate-700 mb-1">PLZ</label>
+                    <input type="text" name="plz" value="${data.plz || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
+                <div class="col-span-2"><label class="block text-sm font-medium text-slate-700 mb-1">Ort</label>
+                    <input type="text" name="ort" value="${data.ort || ''}" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm outline-none"></div>
+            </div>
+        `;
+    }
+
+    function closeBSModal() {
+        document.getElementById('bs-modal').classList.add('hidden');
+    }
+
+    async function submitBS() {
+        const form = document.getElementById('bs-form');
+        if (!form.reportValidity()) return;
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch('/api/betriebe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (result.success) {
+                closeBSModal();
+                selectBetrieb({
+                    bs_nr: result.bs_nr,
+                    name: data.name || 'Neue Betriebsstätte',
+                    strasse: data.strasse || '',
+                    plz: data.plz || '',
+                    ort: data.ort || ''
+                });
+                showNotification('Betriebsstätte angelegt', `BS-Nr: ${result.bs_nr} wurde zugewiesen.`, 'success');
+            } else {
+                alert('Fehler: ' + result.error);
+            }
+        } catch (e) {
+            alert('Fehler: ' + e.message);
+        }
+    }
+
+    function showNotification(title, message, type = 'info') {
+        const toast = document.getElementById('notification');
+        toast.querySelector('.notification-title').textContent = title;
+        toast.querySelector('.notification-message').textContent = message;
+        toast.querySelector('.notification-icon').innerHTML = type === 'success'
+            ? '<i data-lucide="check-circle" class="w-6 h-6 text-green-500"></i>'
+            : '<i data-lucide="info" class="w-6 h-6 text-blue-500"></i>';
+
+        toast.classList.remove('opacity-0', 'translate-y-20');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        setTimeout(() => {
+            hideNotification();
+        }, 5000);
+    }
+
+    function hideNotification() {
+        document.getElementById('notification').classList.add('opacity-0', 'translate-y-20');
+    }
+
+    function selectBetriebInternal(b) {
+        document.getElementById('betrieb-search').value = b.name;
+        document.getElementById('betrieb-results').classList.add('hidden');
+
+        // Toggle Visibility
+        document.getElementById('betrieb-search-container').classList.add('hidden');
+        document.getElementById('selected-betrieb').classList.remove('hidden');
+
+        document.getElementById('betrieb-name').textContent = b.name;
+        document.getElementById('betrieb-info').textContent = b.bs_nr + ' • ' + b.strasse + ', ' + b.plz + ' ' + b.ort;
+        document.getElementById('betrieb-bs-nr').value = b.bs_nr;
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function resetBetrieb() {
+        document.getElementById('betrieb-bs-nr').value = '';
+        document.getElementById('betrieb-search').value = '';
+
+        document.getElementById('selected-betrieb').classList.add('hidden');
+        document.getElementById('betrieb-search-container').classList.remove('hidden');
+
+        document.getElementById('betrieb-search').focus();
+    }
+
+    // Close search results on click outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#betrieb-search') && !e.target.closest('#betrieb-results')) {
+            document.getElementById('betrieb-results')?.classList.add('hidden');
+        }
+    });
+
+    // Category change - load fields
+    document.getElementById('category-select')?.addEventListener('change', async function () {
+        const categoryId = this.value;
+        if (!categoryId) return;
+
+        // Update document category
+        await fetch('/api/documents/' + docId + '/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category_id: parseInt(categoryId) })
+        });
+
+        // Reload page to show new fields
+        window.location.reload();
+    });
+
+    // AI Analysis
+    document.getElementById('btn-analyze')?.addEventListener('click', async function () {
+        const btn = this;
+        btn.disabled = true;
+        // Button loading state with progress bar below
+        btn.innerHTML = `
+            <div class="flex flex-col items-center">
+                <div class="spinner w-5 h-5 border-2 mb-1"></div>
+            </div>
+        `;
+
+        let progressHtml = `
+            <div id="single-analysis-progress" class="mt-2 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        `;
+        // Check if already exists
+        if (!document.getElementById('single-analysis-progress')) {
+            btn.parentElement.insertAdjacentHTML('beforeend', progressHtml);
+        }
+
+        // Fake progress animation
+        const progBar = document.querySelector('#single-analysis-progress div');
+        let prog = 0;
+        const progInterval = setInterval(() => {
+            if (prog < 90) {
+                prog += Math.random() * 5;
+                if (progBar) progBar.style.width = prog + '%';
+            }
+        }, 1000);
+
+        console.log("Starting analysis...");
+
+        // Create abort controller with 3 minute timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes
+
+        try {
+            console.log("Fetching /api/documents/" + docId + "/analyze");
+            const res = await fetch('/api/documents/' + docId + '/analyze', {
+                method: 'POST',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            console.log("Response received:", res.status);
+
+            const data = await res.json();
+            console.log("Data received:", data);
+
+            if (data.success) {
+                showNotification('success', 'Analyse abgeschlossen',
+                    'Kategorie: ' + (data.category_name || 'Unbekannt') +
+                    ' (Konfidenz: ' + Math.round((data.confidence || 0) * 100) + '%)');
+
+                // Delay reload slightly to let notification be seen
+                setTimeout(() => window.location.reload(), 1500);
+                if (data.extracted_data) {
+                    // Auto-fill fields logic handles basic inputs
+                    // Now trigger the specialized auto-check for Betriebsstätte
+                    setTimeout(autoCheckBetrieb, 1000);
+                }
+
+                // Cleanup Progress
+                clearInterval(progInterval);
+                if (progBar) progBar.style.width = '100%';
+                setTimeout(() => document.getElementById('single-analysis-progress')?.remove(), 500);
+
+            } else {
+                showNotification('error', 'Analysefehler', data.error);
+                clearInterval(progInterval);
+                document.getElementById('single-analysis-progress')?.remove();
+            }
+        } catch (e) {
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') {
+                showNotification('error', 'Zeitüberschreitung', 'Die KI-Analyse hat zu lange gedauert. Bitte erneut versuchen.');
+            } else {
+                showNotification('error', 'Netzwerkfehler', e.message);
+            }
+        }
+
+        btn.disabled = false;
+        // Use inline SVG for robustness
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.59 7a2.8 2.8 0 0 0-2.83 2.82c0 .34.06.67.16.98a4.5 4.5 0 0 0-4.99 4.13V18"/></svg>';
+
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+    });
+
+
+
+    // Reject Document
+
+    // Reject Modal Logic
+    window.openRejectModal = function () {
+        const modal = document.getElementById('reject-modal');
+        if (modal) modal.classList.remove('hidden');
+        else console.error("Reject modal not found in DOM");
+    }
+
+    window.closeRejectModal = function () {
+        const modal = document.getElementById('reject-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    window.confirmReject = async function (mode) {
+        if (mode === 'delete') {
+            if (!confirm('SIND SIE SICHER?\n\nDas Dokument wird unwiderruflich von der Festplatte gelöscht!\nDiese Aktion kann nicht rückgängig gemacht werden.')) {
+                return;
+            }
+        }
+
+        closeRejectModal();
+
+        // Show loading on main button (visual feedback)
+        const btn = document.getElementById('btn-reject');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner w-4 h-4 border-2 border-red-600 border-t-red-200"></div>';
+        }
+
+        try {
+            const res = await fetch(`/api/documents/${docId}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: mode })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showNotification('info', 'Dokument verarbeitet', data.message);
+                setTimeout(() => {
+                    window.location.href = '{{ url_for("main.validation") }}';
+                }, 1000);
+            } else {
+                showNotification('error', 'Fehler', data.error || 'Unbekannter Fehler');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+                }
+            }
+        } catch (e) {
+            showNotification('error', 'Netzwerkfehler', e.message);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+            }
+        }
+    };
+
+    // Functionality moved to inline onclick="openRejectModal()" on the button itself for robustness.
+
+    // Transfer to IFAS
+    document.getElementById('btn-transfer')?.addEventListener('click', async function () {
+        const bsNr = document.getElementById('betrieb-bs-nr')?.value;
+
+        if (!bsNr) {
+            showNotification('warning', 'Betriebsstätte fehlt', 'Bitte wählen Sie eine Betriebsstätte aus');
+            return;
+        }
+
+        // Collect form data
+        const formData = {};
+        document.querySelectorAll('#form-fields [name]').forEach(el => {
+            formData[el.name] = el.value;
+        });
+
+        // Check required fields
+        const categoryId = document.getElementById('category-select')?.value;
+        if (!categoryId) {
+            showNotification('warning', 'Kategorie fehlt', 'Bitte wählen Sie eine Kategorie');
+            return;
+        }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner w-4 h-4 border-2 border-white border-t-white/50"></div>';
+
+        try {
+            // First update the document data
+            await fetch('/api/documents/' + docId + '/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category_id: parseInt(categoryId),
+                    extracted_data: formData,
+                    ifas_bs_nr: bsNr
+                })
+            });
+
+            // Then transfer to IFAS
+            const res = await fetch('/api/documents/' + docId + '/transfer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bs_nr: bsNr })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showNotification('success', 'Erfolgreich übertragen', 'Aktenzeichen: ' + data.aktenzeichen);
+                setTimeout(() => {
+                    window.location.href = '{{ url_for("main.validation") }}';
+                }, 2000);
+            } else {
+                showNotification('error', 'Übertragungsfehler', data.error);
+            }
+        } catch (e) {
+            showNotification('error', 'Netzwerkfehler', e.message);
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M20 6 9 17l-5-5"/></svg>';
+    });
+
+    // ============================================================================
+    // BETRIEBSSTÄTTEN AUTO-VALIDATION
+    // ============================================================================
+
+    // Check Betriebsstätte on load and after analysis
+    async function autoCheckBetrieb() {
+        console.log("Auto-Check running. Global Data:", globalExtractedData);
+        // FIXME: Remove in production
+        // if (globalExtractedData && Object.keys(globalExtractedData).length > 0) {
+        //    console.log("DEBUG: Extracted Data found:", globalExtractedData);
+        // }
+
+        // If already selected, do nothing (green state is handled by server template)
+        if (document.getElementById('betrieb-bs-nr').value) return;
+
+        // Get extracted data from DOM (we need to inject this reliably)
+        // Let's grab it from the "smart prompt" logic if available, or parsing the form?
+        // Better: Make extracted data available as a global JS object or read from form fields.
+
+        let bsName = '';
+        const nameField = document.querySelector('[name="betriebsstaette"]') || document.querySelector('[name="arbeitgeber"]') || document.querySelector('[name="firma"]');
+        if (nameField) bsName = nameField.value;
+
+        // Also check if we have a hidden prompt box already (legacy from previous AI run)
+        // Actually, we want to run this fresh.
+
+        if (!bsName || bsName.length < 3) return;
+
+        const container = document.getElementById('betrieb-search-container');
+        const input = document.getElementById('betrieb-search');
+        if (!container || !input) return;
+
+        // Set input value if empty
+        if (!input.value) input.value = bsName;
+
+        try {
+            const res = await fetch('/api/betriebe/search?q=' + encodeURIComponent(bsName));
+            try {
+                var results = await res.json();
+            } catch (err) { var results = []; }
+
+            // Reset classes
+            input.classList.remove('bg-red-50', 'border-red-300', 'text-red-900', 'bg-amber-50', 'border-amber-300', 'text-amber-900');
+            const existingPrompts = container.querySelectorAll('.prompt-box');
+            if (existingPrompts) existingPrompts.forEach(p => p.remove());
+
+            if (!results || results.length === 0) {
+                // LIGHT RED STATE: No match (Soft warning)
+                input.classList.add('bg-red-50', 'border-red-200', 'text-slate-800');
+
+                // Prepare Full Data for Modal
+                let prefillData = {
+                    name: bsName
+                };
+
+                // enriching with global data if available
+                if (typeof globalExtractedData !== 'undefined' && globalExtractedData) {
+                    // Try to get data from specific keys or fallbacks
+                    if (globalExtractedData.betrieb_strasse || globalExtractedData.strasse)
+                        prefillData.strasse = globalExtractedData.betrieb_strasse || globalExtractedData.strasse;
+
+                    if (globalExtractedData.betrieb_plz || globalExtractedData.plz)
+                        prefillData.plz = globalExtractedData.betrieb_plz || globalExtractedData.plz;
+
+                    if (globalExtractedData.betrieb_ort || globalExtractedData.ort)
+                        prefillData.ort = globalExtractedData.betrieb_ort || globalExtractedData.ort;
+
+                    if (globalExtractedData.betrieb_email || globalExtractedData.email)
+                        prefillData.email = globalExtractedData.betrieb_email || globalExtractedData.email;
+
+                    // Note: Form config expects 'sachbearbeiter' for Ansprechpartner
+                    if (globalExtractedData.betrieb_ansprechpartner || globalExtractedData.ansprechpartner)
+                        prefillData.sachbearbeiter = globalExtractedData.betrieb_ansprechpartner || globalExtractedData.ansprechpartner;
+                }
+
+                const prefillJson = JSON.stringify(prefillData).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+
+                // Show "Create New" prompt - CLEAN DESIGN (Like Image 2)
+                const promptHtml = `
+                    <div id="bs-prompt-box-init" class="prompt-box absolute top-full left-0 w-full z-20 bg-white border border-slate-200 rounded-lg mt-1 shadow-xl flex flex-col overflow-hidden opacity-0 invisible transition-all duration-200">
+                        <div class="px-3 py-2 text-xs text-slate-500 font-medium">
+                             Keine Ergebnisse in IFAS
+                        </div>
+                        <button onclick='openBSModal(${prefillJson})'
+                                class="w-full text-left px-3 py-2 text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors font-medium border-t border-indigo-100 flex items-center gap-2">
+                            <i data-lucide="plus" class="w-3 h-3"></i>
+                            "${bsName.replace(/"/g, '&quot;')}" neu anlegen
+                        </button>
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', promptHtml);
+                const promptBox = document.getElementById('bs-prompt-box-init');
+                if (window.lucide) lucide.createIcons();
+
+                // Animate in
+                setTimeout(() => {
+                    promptBox.classList.remove('opacity-0', 'invisible');
+                }, 50);
+
+                // Listeners for Tooltip Behavior
+                const prompt = document.getElementById('bs-prompt-box-init');
+
+                const show = () => {
+                    if (prompt) {
+                        prompt.classList.remove('opacity-0', 'invisible');
+                        prompt.classList.add('opacity-100', 'visible');
+                    }
+                };
+
+                const hide = () => {
+                    setTimeout(() => {
+                        if (prompt && !prompt.matches(':hover') && !input.matches(':focus')) {
+                            prompt.classList.remove('opacity-100', 'visible');
+                            prompt.classList.add('opacity-0', 'invisible');
+                        }
+                    }, 200);
+                };
+
+                // Attach listeners
+                input.addEventListener('focus', show);
+                input.addEventListener('click', show); // Also on click
+                input.addEventListener('blur', hide);
+
+                if (prompt) {
+                    prompt.addEventListener('mouseleave', hide);
+                    prompt.addEventListener('mouseenter', show);
+                }
+
+                // Show briefly on first load
+                show();
+                setTimeout(hide, 4000);
+
+                input.placeholder = "Kein Treffer - Klicken zum Erstellen...";
+
+            } else if (results.length === 1) {
+                // GREEN STATE: Exact match -> Auto Select
+                selectBetrieb(results[0]);
+                showNotification('success', 'Betriebsstätte erkannt', `${results[0].name} wurde automatisch ausgewählt.`);
+
+            } else {
+                // YELLOW STATE: Multiple matches
+                input.classList.add('bg-amber-50', 'border-amber-300', 'text-amber-900');
+                input.placeholder = `${results.length} Treffer - bitte wählen...`;
+
+                // Show results dropdown
+                const resultsDiv = document.getElementById('betrieb-results');
+                if (resultsDiv) {
+                    handleSearchInput(input);
+                }
+            }
+        } catch (e) {
+            console.error("Auto-check error:", e);
+        }
+    }
+
+    // Call on load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Validation polling is already started
+        // Run auto-check if we have a document selected
+        if (docId) {
+            setTimeout(autoCheckBetrieb, 500);
+        }
+    });
+
+    // ============================================================================
+    // POLLING & SYNC
+    // ============================================================================
+    function startValidationPolling() {
+        setInterval(async () => {
+            if (document.hidden) return;
+
+            // 1. Update Global Badge
+            try {
+                const res = await fetch('/api/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    const badge = document.getElementById('global-validation-badge');
+                    if (badge) {
+                        badge.textContent = data.global.ready;
+                        if (data.global.ready > 0) badge.classList.remove('hidden');
+                        else badge.classList.add('hidden');
+                    }
+                }
+            } catch (e) { console.error("Stats poll error", e); }
+
+            // 2. Update Document List (only if not searching/filtering actively - or just do it?)
+            // We should only update if user is NOT scrolling? Or just replace innerHTML?
+            // Replacing innerHTML kills scroll position if not handled.
+            // But we have saveScrollPosition on click.
+            // Let's check if we should update. A simple check is: "Has version changed?"
+            // But we don't have versioning.
+            // Let's just fetch and diff? HTML diffing is heavy.
+            // Simple approach: Fetch and replace.
+
+            // Construct current list URL
+            const listUrl = new URL('/validation/list', window.location.origin);
+            const currentParams = new URL(window.location.href).searchParams;
+            currentParams.forEach((val, key) => listUrl.searchParams.set(key, val));
+
+            try {
+                const res = await fetch(listUrl);
+                if (res.ok) {
+                    const newHtml = await res.text();
+                    const listEl = document.getElementById('document-list');
+                    if (listEl) {
+                        // Prevent update if user is dragging scrollbar? 
+                        // Actually, replacing innerHTML usually resets scroll unless we save/restore.
+                        const scrollTop = listEl.scrollTop;
+
+                        // Compare content length to see if it changed significantly?
+                        // Or just checking hash?
+                        // For now, simple replace + scroll restore
+                        if (listEl.innerHTML.length !== newHtml.length || listEl.innerHTML !== newHtml) {
+                            listEl.innerHTML = newHtml;
+                            listEl.scrollTop = scrollTop;
+                            if (typeof lucide !== 'undefined') lucide.createIcons();
+                        }
+                    }
+                }
+            } catch (e) { console.error("List poll error", e); }
+
+        }, 2000); // 2 seconds
+    }
+
+    // Start polling
+    startValidationPolling();
+
+    // Initial icon render
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+</script>
+{% endblock %}

@@ -1,0 +1,350 @@
+{% extends "admin/index.html" %}
+
+{% block admin_content %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div
+    class="p-4 rounded-lg mb-4 {% if category == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="space-y-6">
+    <!-- Category Details -->
+    <div class="glass rounded-2xl border border-white/20 shadow-sm">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                {% if category %}
+                <span class="text-2xl">{{ category.icon }}</span>
+                {{ category.display_name or category.name }}
+                {% else %}
+                <i data-lucide="folder-plus" class="w-5 h-5 text-primary-600"></i>
+                Neue Kategorie
+                {% endif %}
+            </h2>
+            {% if category %}
+            <form action="{{ url_for('admin.delete_category', category_id=category.id) }}" method="POST" class="inline"
+                onsubmit="return confirm('Kategorie und alle Felder löschen?')">
+                <button type="submit"
+                    class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    Löschen
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <form
+            action="{{ url_for('admin.update_category', category_id=category.id) if category else url_for('admin.new_category') }}"
+            method="POST" class="p-6 space-y-4">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Anzeigename</label>
+                    <input type="text" name="display_name" value="{{ category.display_name if category else '' }}"
+                        required
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Icon (Emoji)</label>
+                    <input type="text" name="icon" value="{{ category.icon if category else '📄' }}" maxlength="4"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none text-center text-xl">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Farbe</label>
+                    <input type="color" name="color" value="{{ category.color if category else '#6366f1' }}"
+                        class="w-full h-11 border border-slate-200 rounded-lg cursor-pointer">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">IFAS Art</label>
+                    <input type="text" name="ifas_art" value="{{ category.ifas_art if category else '' }}"
+                        placeholder="z.B. Mutterschutz"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">IFAS Zusatzart</label>
+                    <input type="text" name="ifas_zusatzart" value="{{ category.ifas_zusatzart if category else '' }}"
+                        placeholder="Optional"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Schlüsselwörter für KI
+                    (kommagetrennt)</label>
+                <input type="text" name="keywords" value="{{ category.keywords if category else '' }}"
+                    placeholder="mutterschutz, schwanger, entbindung"
+                    class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Beschreibung</label>
+                <textarea name="description" rows="2"
+                    class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none resize-none">{{ category.description if category else '' }}</textarea>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_active" {{ 'checked' if not category or category.is_active }}
+                        class="w-5 h-5 rounded border-slate-300">
+                    <span class="text-sm text-slate-700">Kategorie aktiv</span>
+                </label>
+                {% if not category %}
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Interner Name (Kleinbuchstaben)</label>
+                    <input type="text" name="name" required pattern="[a-z0-9_]+" placeholder="z.B. mutterschutz"
+                        class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit"
+                    class="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all">
+                    Speichern
+                </button>
+                <a href="{{ url_for('admin.categories') }}"
+                    class="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all">
+                    Zurück
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {% if category %}
+    <!-- Form Fields -->
+    <div class="glass rounded-2xl border border-white/20 shadow-sm">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <i data-lucide="list" class="w-5 h-5 text-primary-600"></i>
+                Formularfelder
+            </h2>
+        </div>
+
+        <div class="divide-y divide-slate-100">
+            {% for field in fields %}
+            <form id="field-row-{{ field.id }}"
+                action="{{ url_for('admin.update_field', category_id=category.id, field_id=field.id) }}" method="POST"
+                class="p-4 transition-colors duration-300">
+                <div class="grid grid-cols-12 gap-3 items-end">
+                    <div class="col-span-1 flex flex-col items-center justify-center gap-1 pb-1">
+                        <button type="button" onclick="moveField('{{ field.id }}', 'up')"
+                            class="p-0.5 text-slate-400 hover:text-primary-600 rounded transition-colors"
+                            title="Nach oben">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="m18 15-6-6-6 6" />
+                            </svg>
+                        </button>
+                        <button type="button" onclick="moveField('{{ field.id }}', 'down')"
+                            class="p-0.5 text-slate-400 hover:text-primary-600 rounded transition-colors"
+                            title="Nach unten">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-xs text-slate-500 mb-1">Bezeichnung</label>
+                        <input type="text" name="label" value="{{ field.label }}" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs text-slate-500 mb-1">Key</label>
+                        <input type="text" name="key" value="{{ field.key }}" required
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none font-mono">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs text-slate-500 mb-1">Content-ID (IFAS)</label>
+                        <input type="text" name="content_id_ifas" value="{{ field.content_id_ifas or '' }}"
+                            class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none font-mono">
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-xs text-slate-500 mb-1">Typ</label>
+                        <select name="field_type"
+                            class="w-full px-2 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                            <option value="text" {{ 'selected' if field.field_type=='text' }}>Text</option>
+                            <option value="number" {{ 'selected' if field.field_type=='number' }}>Zahl</option>
+                            <option value="date" {{ 'selected' if field.field_type=='date' }}>Datum</option>
+                            <option value="select" {{ 'selected' if field.field_type=='select' }}>Auswahl</option>
+                            <option value="textarea" {{ 'selected' if field.field_type=='textarea' }}>Textfeld</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2 flex items-center gap-1">
+                        <label class="flex items-center gap-1 text-xs whitespace-nowrap" title="Pflichtfeld">
+                            <input type="checkbox" name="required" {{ 'checked' if field.required }}
+                                class="w-3 h-3 rounded border-slate-300">
+                            <span>Pfl.</span>
+                        </label>
+                        <label class="flex items-center gap-1 text-xs whitespace-nowrap" title="Anzeigen">
+                            <input type="checkbox" name="show_in_validation" {{ 'checked' if field.show_in_validation }}
+                                class="w-3 h-3 rounded border-slate-300">
+                            <span>Anz.</span>
+                        </label>
+                        <label class="flex items-center gap-1 text-xs whitespace-nowrap" title="Auto-Fill">
+                            <input type="checkbox" name="auto_fill" {{ 'checked' if field.auto_fill }}
+                                class="w-3 h-3 rounded border-slate-300">
+                            <span>Auto</span>
+                        </label>
+                    </div>
+                    <div class="col-span-1 flex gap-1 justify-end">
+                        <button type="submit" title="Speichern"
+                            class="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="w-4 h-4">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                <polyline points="17 21 17 13 7 13 7 21" />
+                                <polyline points="7 3 7 8 15 8" />
+                            </svg>
+                        </button>
+                        <button type="button" onclick="deleteField('{{ field.id }}')" title="Löschen"
+                            class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="w-4 h-4">
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                <line x1="10" x2="10" y1="11" y2="17" />
+                                <line x1="14" x2="14" y1="11" y2="17" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+
+        <!-- Add New Field -->
+        <form action="{{ url_for('admin.add_field', category_id=category.id) }}" method="POST"
+            class="p-4 bg-slate-50 border-t border-slate-200">
+            <div class="grid grid-cols-12 gap-3 items-end">
+                <div class="col-span-1">
+                    <label class="block text-xs text-slate-500 mb-1">Pos.</label>
+                    <div class="w-full px-2 py-2 border border-transparent text-sm text-center text-slate-400">Auto
+                    </div>
+                </div>
+                <div class="col-span-3">
+                    <label class="block text-xs text-slate-500 mb-1">Neue Bezeichnung</label>
+                    <input type="text" name="label" required placeholder="z.B. Nachname"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs text-slate-500 mb-1">Key</label>
+                    <input type="text" name="key" required placeholder="nachname" pattern="[a-z0-9_]+"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none font-mono">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs text-slate-500 mb-1">Content-ID</label>
+                    <input type="text" name="content_id_ifas" placeholder="musch_name"
+                        class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none font-mono">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-xs text-slate-500 mb-1">Typ</label>
+                    <select name="field_type"
+                        class="w-full px-2 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                        <option value="text">Text</option>
+                        <option value="number">Zahl</option>
+                        <option value="date">Datum</option>
+                        <option value="select">Auswahl</option>
+                        <option value="textarea">Textfeld</option>
+                    </select>
+                </div>
+                <div class="col-span-2 flex items-center gap-1">
+                    <label class="flex items-center gap-1 text-xs whitespace-nowrap" title="Pflichtfeld">
+                        <input type="checkbox" name="required" class="w-3 h-3 rounded border-slate-300">
+                        <span>Pfl.</span>
+                    </label>
+                    <label class="flex items-center gap-1 text-xs whitespace-nowrap" title="Anzeigen">
+                        <input type="checkbox" name="show_in_validation" checked
+                            class="w-3 h-3 rounded border-slate-300">
+                        <span>Anz.</span>
+                    </label>
+                    <label class="flex items-center gap-1 text-xs whitespace-nowrap" title="Auto-Fill">
+                        <input type="checkbox" name="auto_fill" checked class="w-3 h-3 rounded border-slate-300">
+                        <span>Auto</span>
+                    </label>
+                </div>
+                <div class="col-span-1">
+                    <button type="submit"
+                        class="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center justify-center gap-1"
+                        title="Feld hinzufügen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="w-4 h-4">
+                            <path d="M5 12h14" />
+                            <path d="M12 5v14" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function deleteField(fieldId) {
+        if (!confirm('Feld wirklich löschen?')) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/categories/{{ category.id if category else 0 }}/fields/${fieldId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    async function moveField(fieldId, direction) {
+        const url = `/admin/categories/{{ category.id if category else 0 }}/fields/${fieldId}/move/${direction}`;
+
+        // Optimistic UI update (swap immediately)
+        const row = document.getElementById(`field-row-${fieldId}`);
+        if (row) {
+            // Apply strict constraints to prevent jitter
+            row.style.height = row.offsetHeight + 'px';
+
+            if (direction === 'up' && row.previousElementSibling) {
+                // Animate
+                row.classList.add('bg-blue-50');
+                setTimeout(() => row.classList.remove('bg-blue-50'), 500);
+                row.parentNode.insertBefore(row, row.previousElementSibling);
+            } else if (direction === 'down' && row.nextElementSibling) {
+                // Animate
+                row.classList.add('bg-blue-50');
+                setTimeout(() => row.classList.remove('bg-blue-50'), 500);
+                row.parentNode.insertBefore(row.nextElementSibling, row);
+            }
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+
+            if (!data.success) {
+                // Revert on error? Or just reload to be safe
+                console.error('Move failed', data);
+                location.reload();
+            }
+        } catch (e) {
+            console.error(e);
+            location.reload();
+        }
+    }
+</script>
+{% endblock %}

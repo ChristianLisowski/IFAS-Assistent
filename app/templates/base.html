@@ -1,0 +1,288 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IFAS-Assistent{% endblock %}</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <!-- PDF.js for document preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .transition-all {
+            transition: all 0.2s ease;
+        }
+
+        .spinner {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes successPulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-icon {
+            animation: successPulse 0.4s ease-out;
+        }
+    </style>
+
+    {% set mode = app_config.get('theme_mode', 'light') if app_config else 'light' %}
+
+    {% if mode == 'dark' %}
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --bg-color: #0f172a;
+            --text-color: #f1f5f9;
+            --text-muted: #94a3b8;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    {% else %}
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --bg-color: #f8fafc;
+            --text-color: #0f172a;
+            --text-muted: #64748b;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --input-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --primary-color: #0ea5e9;
+            --primary-hover: #0284c7;
+            --shadow-color: rgba(148, 163, 184, 0.1);
+        }
+    </style>
+    {% endif %}
+
+    <style>
+        body {
+            background-color: var(--bg-color);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-color);
+            transition: all 0.5s ease;
+        }
+
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color);
+        }
+
+        .border-slate-200,
+        .border-slate-100,
+        .border-gray-200 {
+            border-color: var(--border-color) !important;
+        }
+
+        .bg-white {
+            background-color: var(--card-bg) !important;
+        }
+
+        .text-slate-900,
+        .text-slate-800,
+        .text-slate-700,
+        .text-slate-600,
+        .text-gray-900,
+        .text-gray-800 {
+            color: var(--text-color) !important;
+        }
+
+        .text-slate-500,
+        .text-slate-400,
+        .text-gray-500 {
+            color: var(--text-muted) !important;
+        }
+
+        .bg-slate-50,
+        .bg-gray-50 {
+            background-color: transparent !important;
+        }
+    </style>
+
+    {% if mode == 'dark' %}
+    <style>
+        .bg-slate-100,
+        .bg-gray-100 {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .hover\:bg-slate-100:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .hover\:bg-white:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        input,
+        select,
+        textarea {
+            background-color: var(--input-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+    </style>
+    {% endif %}
+
+    {% block head %}{% endblock %}
+</head>
+
+<body class="min-h-screen">
+    {% block body %}{% endblock %}
+    <footer class="py-4 text-center text-xs text-slate-400">
+        <p>Version 1.01 (beta) - Landesamt f&uuml;r Arbeitsschutz, Soziales und Gesundheit</p>
+    </footer>
+    {% block scripts %}{% endblock %}
+
+    <script>
+        // Safe Lucide init
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+
+        // Global notification function
+        window.showNotification = function (type, title, message) {
+            const notif = document.getElementById('notification');
+            if (!notif) return;
+
+            const iconDiv = notif.querySelector('.notification-icon');
+            const titleEl = notif.querySelector('.notification-title');
+            const msgEl = notif.querySelector('.notification-message');
+
+            // Set content
+            if (titleEl) titleEl.textContent = title;
+            if (msgEl) msgEl.textContent = message;
+
+            // Set icon and color based on type
+            if (iconDiv) {
+                let iconName = 'info';
+                let colorClass = 'text-blue-500';
+
+                if (type === 'success') {
+                    iconName = 'check-circle';
+                    colorClass = 'text-green-500';
+                } else if (type === 'error') {
+                    iconName = 'alert-circle';
+                    colorClass = 'text-red-500';
+                } else if (type === 'warning') {
+                    iconName = 'alert-triangle';
+                    colorClass = 'text-amber-500';
+                }
+
+                // Try to use Lucide if available, else fallback to SVG or Emoji
+                if (typeof lucide !== 'undefined' && lucide.icons && lucide.icons[iconName]) {
+                    // This requires lucide to be loaded. If not, we can use SVG string directly?
+                    // Lucide doesn't expose SVG string easily in UMD without createIcons on element.
+                    // Instead, let's use innerHTML with data-lucide and try createIcons
+                    iconDiv.innerHTML = `<i data-lucide="${iconName}" class="w-6 h-6 ${colorClass}"></i>`;
+                    if (lucide.createIcons) lucide.createIcons({ root: iconDiv });
+                } else {
+                    // Fallback to simple colored circle
+                    iconDiv.innerHTML = `<div class="w-6 h-6 rounded-full ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}"></div>`;
+                }
+            }
+
+            // Show
+            notif.classList.remove('opacity-0', 'translate-y-20');
+
+            // Auto hide
+            if (window.notifTimeout) clearTimeout(window.notifTimeout);
+            window.notifTimeout = setTimeout(() => {
+                hideNotification();
+            }, 5000);
+        };
+
+        window.hideNotification = function () {
+            const notif = document.getElementById('notification');
+            if (notif) {
+                notif.classList.add('opacity-0', 'translate-y-20');
+            }
+        };
+    </script>
+</body>
+
+</html>

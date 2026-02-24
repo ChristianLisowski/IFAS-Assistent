@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Setup-Guide: IFAS-Assistent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* VARIABLES (Consistent with Technical Documentation) */
+        :root {
+            --bg-color: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-elevated: #334155;
+            --text: #f8fafc;
+            --text2: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --border: #334155;
+            --green: #10b981;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --cyan: #06b6d4;
+            --accent2: #8b5cf6;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* GLOBAL RESET */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 60px;
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-content h1 span {
+            background: linear-gradient(135deg, var(--cyan), var(--accent));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* SECTIONS */
+        section {
+            margin-top: 60px;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        p {
+            color: var(--text2);
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+        }
+
+        /* CARDS (STEPS) */
+        .step-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .step-number {
+            position: absolute;
+            top: -16px;
+            left: 24px;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            color: white;
+            font-weight: bold;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .step-card h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* CODE BLOCKS */
+        pre {
+            background: #000000;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid var(--border);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        p code,
+        li code {
+            background: var(--bg-elevated);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--cyan);
+        }
+
+        /* LISTS */
+        ul,
+        ol {
+            margin-left: 24px;
+            margin-bottom: 16px;
+            color: var(--text2);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* ALERTS / HINTS */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 0.95rem;
+            color: var(--text);
+            display: flex;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--accent);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--yellow);
+        }
+
+        .alert-important {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--red);
+        }
+
+        /* BUTTON LOOKALIKE FOR LINKS */
+        a.download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-elevated);
+            color: var(--text);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        a.download-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .icon-box {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            text-align: center;
+            line-height: 28px;
+            border-radius: 6px;
+            background: var(--bg-elevated);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="header-content">
+            <h1>🚀 <span>IFAS-Assistent</span> Installation &amp; Setup</h1>
+            <div style="color:var(--text2); font-size:0.9rem;">Schnellstart-Anleitung für neue Systeme</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <p style="margin-top: 32px; font-size: 1.1rem;">
+            Diese Anleitung führt Sie Schritt für Schritt durch die Einrichtung des <strong>IFAS-Assistenten</strong>
+            auf einem neuen Windows-Rechner. Das System stützt sich auf lokale KI (LMStudio) und Texterkennung
+            (Tesseract OCR).
+        </p>
+
+        <!-- PREREQUISITES -->
+        <section>
+            <h2><span class="icon-box">🔧</span> 1. System-Voraussetzungen (Python & Tesseract)</h2>
+
+            <div class="step-card">
+                <div class="step-number">1a</div>
+                <h3>Python installieren</h3>
+                <p>Der IFAS-Assistent benötigt <strong>Python 3.10 oder neuer</strong>.</p>
+                <ol>
+                    <li>Laden Sie Python herunter: <a href="https://www.python.org/downloads/windows/" target="_blank"
+                            class="download-btn">⬇️ Python für Windows laden</a></li>
+                    <li>Führen Sie den Installer aus.</li>
+                    <li><strong>WICHTIG:</strong> Setzen Sie den Haken bei <code>"Add Python 3.x to PATH"</code> unten
+                        im Installationsfenster, bevor Sie auf "Install Now" klicken!</li>
+                </ol>
+                <div class="alert alert-info">
+                    <strong>Testen:</strong> Öffnen Sie ein Terminal (CMD oder PowerShell) und tippen Sie
+                    <code>python --version</code>. Es sollte eine Version wie <code>Python 3.11.x</code> erscheinen.
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-number">1b</div>
+                <h3>Tesseract OCR installieren</h3>
+                <p>Für die Analyse von eingescannten PDFs oder Bildern benötigen Sie Tesseract OCR.</p>
+                <ol>
+                    <li>Laden Sie den Windows-Installer herunter (z.B. UB-Mannheim Build): <a
+                            href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" class="download-btn">⬇️
+                            Tesseract Installer</a></li>
+                    <li>Installieren Sie Tesseract. Der Standardpfad ist meist
+                        <code>C:\Program Files\Tesseract-OCR</code>.
+                    </li>
+                    <li>Öffnen Sie in Windows die <strong>"Systemumgebungsvariablen bearbeiten"</strong>.</li>
+                    <li>Klicken Sie auf <strong>"Umgebungsvariablen"</strong>.</li>
+                    <li>Suchen Sie unter "Systemvariablen" die Variable <code>Path</code>, klicken Sie auf Bearbeiten
+                        und fügen Sie den Tesseract-Ordnerpfad (z.B. <code>C:\Program Files\Tesseract-OCR</code>) als
+                        neuen Eintrag hinzu.</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- LMSTUDIO -->
+        <section>
+            <h2><span class="icon-box">🧠</span> 2. Lokale KI-Engine (LMStudio) einrichten</h2>
+            <p>Der IFAS-Assistent nutzt ein lokales Large Language Model, das über LMStudio gehostet wird. Das schützt
+                den Datenschutz, da keine Dokumentengeninhalte an Cloud-Anbieter gesendet werden.</p>
+
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>LMStudio installieren & Modell laden</h3>
+                <ol>
+                    <li>Laden Sie <strong>LMStudio</strong> herunter: <a href="https://lmstudio.ai/" target="_blank"
+                            class="download-btn">⬇️ LMStudio laden</a></li>
+                    <li>Installieren und starten Sie LMStudio.</li>
+                    <li>Suchen Sie in der Suchleiste von LMStudio nach einem geeigneten Modell.
+                        <br><em>Empfohlen: Ein leichtgewichtiges Instruction-Modell wie
+                            <code>Llama-3-8B-Instruct-GGUF</code> oder <code>Mistral-7B-Instruct</code> (quantisiert,
+                            z.B. Q4_K_M für optimale Geschwindigkeit).</em>
+                    </li>
+                    <li>Klicken Sie bei dem gewünschten Modell auf <strong>Download</strong>.</li>
+                </ol>
+
+                <h3 style="margin-top:24px;">Lokalen API-Server starten</h3>
+                <ol>
+                    <li>Wechseln Sie in LMStudio zum Tab <strong>"Local Server"</strong> (Schnittstellen-Icon links in
+                        der Leiste).</li>
+                    <li>Wählen Sie oben im Dropdown-Menü das gerade heruntergeladene Modell aus.</li>
+                    <li>Achten Sie darauf, dass der Port auf <code>1234</code> steht (Standard).</li>
+                    <li>Klicken Sie auf <strong>Start Server</strong>.</li>
+                </ol>
+                <div class="alert alert-important">
+                    <strong>Hinweis:</strong> Der LMStudio Server muss laufen, damit der IFAS-Assistent Dokumente
+                    analysieren kann! Alternativ kann das Backend von LMStudio auch per CLI oder Auto-Start-Skript
+                    gestartet werden.
+                </div>
+            </div>
+        </section>
+
+        <!-- APP SETUP -->
+        <section>
+            <h2><span class="icon-box">🚀</span> 3. IFAS-Assistent Starten</h2>
+            <p>Sobald Python, Tesseract und LMStudio bereit sind, können Sie die eigentliche Anwendung starten.</p>
+
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Anwendung konfigurieren & starten</h3>
+                <ol>
+                    <li>Öffnen Sie eine PowerShell oder Eingabeaufforderung im Ordner <code>IFAS-Assistent</code>.</li>
+                    <li>(Optional, aber empfohlen) Erstellen Sie eine virtuelle Umgebung:
+                        <pre><code>python -m venv venv
+.\venv\Scripts\activate</code></pre>
+                    </li>
+                    <li>Installieren Sie die Abhängigkeiten aus der <code>requirements.txt</code>:
+                        <pre><code>pip install -r requirements.txt</code></pre>
+                    </li>
+                    <li>Initialisieren Sie die Datenbank (nur beim allerersten Start nötig):
+                        <pre><code>flask db upgrade
+python seed.py   # (Falls ein Seed-Skript vorhanden ist, um Standard-Kategorien anzulegen)</code></pre>
+                    </li>
+                    <li>Starten Sie die Anwendung:
+                        <pre><code>python run.py</code></pre>
+                    </li>
+                </ol>
+
+                <div class="alert alert-info">
+                    🎉 <strong>Fertig!</strong> Die Web-Oberfläche ist nun unter <a href="http://localhost:5050"
+                        target="_blank" style="color:var(--accent);">http://localhost:5050</a> erreichbar. Unten rechts
+                    im Windows-Systemtray finden Sie zudem das IFAS-Icon, über das Sie das Dashboard ebenfalls direkt
+                    aufrufen können.
+                </div>
+            </div>
+        </section>
+
+        <!-- NEXT STEPS -->
+        <section>
+            <h2><span class="icon-box">⚙️</span> 4. Erste Schritte</h2>
+            <div class="step-card">
+                <p>Wenn Sie das Dashboard öffnen, loggen Sie sich als Administrator ein (Standardzugangsdaten erfragen
+                    oder neu anlegen lassen).</p>
+                <p>Prüfen Sie im Dashboard unter <strong>Systemstatus</strong>, ob alle Verbindungen grün sind:</p>
+                <ul>
+                    <li><strong>LMStudio API:</strong> Verbunden? (Wenn rot: Prüfen Sie in LMStudio, ob der Server
+                        läuft.)</li>
+                    <li><strong>IFAS API:</strong> Verbunden? (Wenn rot: Prüfen Sie den API-Key in der Konfiguration
+                        oder ob der Mock-Modus läuft.)</li>
+                </ul>
+                <p>Navigieren Sie danach zu den <strong>Einstellungen</strong>, um die Überwachungsordner sowie die
+                    E-Mail-Postfächer zu konfigurieren.</p>
+            </div>
+        </section>
+
+    </div>
+</body>
+
+</html>

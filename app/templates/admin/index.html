@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - IFAS-Assistent{% endblock %}
+
+{% block body %}
+<div class="min-h-screen">
+    <!-- Top Navigation -->
+    <nav class="glass border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="block">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"
+                            class="w-14 h-14 object-contain rounded-xl"
+                            onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25\'><i data-lucide=\'file-check\' class=\'w-7 h-7 text-white\'></i></div>'">
+                    </a>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-800">IFAS-Assistent</h1>
+                        <p class="text-xs text-slate-500">Administration</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="flex items-center gap-2">
+                    <a href="{{ url_for('main.dashboard') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('main.validation') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                        Validierung
+                        <span id="global-validation-badge"
+                            class="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full {% if ready_count == 0 %}hidden{% endif %}">
+                            {{ ready_count }}
+                        </span>
+                    </a>
+                    <a href="{{ url_for('admin.index') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-700 font-medium">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Admin
+                    </a>
+                </div>
+
+                <!-- User Info & Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-3 focus:outline-none">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-medium text-slate-700">{{ current_user.display_name or
+                                current_user.username }}</p>
+                            <p class="text-xs text-slate-400">{{ current_user.role | capitalize }}</p>
+                        </div>
+                        <div
+                            class="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary-500/20 group-hover:scale-105 transition-transform">
+                            {{ (current_user.display_name or current_user.username)[0] | upper }}
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div
+                        class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block transition-all z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div class="bg-white rounded-xl shadow-xl border border-slate-100 py-1">
+                            <div class="px-4 py-3 border-b border-slate-100 sm:hidden">
+                                <p class="text-sm font-medium text-slate-800">{{ current_user.display_name or
+                                    current_user.username }}</p>
+                                <p class="text-xs text-slate-400">{{ current_user.role | capitalize }}</p>
+                            </div>
+
+                            <div class="px-2 py-1">
+                                <a href="{{ url_for('admin.settings') }}"
+                                    class="block px-2 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                                    <i data-lucide="sliders" class="w-4 h-4 text-slate-400"></i>
+                                    Einstellungen
+                                </a>
+                            </div>
+                            <div class="h-px bg-slate-100 my-1"></div>
+
+                            <div class="px-2 py-1">
+                                <a href="{{ url_for('auth.logout') }}"
+                                    class="block px-2 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg flex items-center gap-2">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    Abmelden
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <aside class="lg:col-span-1">
+                <nav class="glass rounded-2xl border border-white/20 shadow-sm p-4 space-y-1">
+                    <a href="{{ url_for('admin.index') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all {{ 'bg-primary-50 text-primary-700' if request.endpoint == 'admin.index' else 'text-slate-600 hover:bg-slate-50' }}">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                        Übersicht
+                    </a>
+                    <a href="{{ url_for('admin.users') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all {{ 'bg-primary-50 text-primary-700' if request.endpoint in ['admin.users', 'admin.new_user', 'admin.edit_user'] else 'text-slate-600 hover:bg-slate-50' }}">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        Benutzer
+                        <span
+                            class="ml-auto text-xs {{ 'bg-primary-100 text-primary-700' if request.endpoint in ['admin.users', 'admin.new_user', 'admin.edit_user'] else 'bg-slate-100' }} px-2 py-0.5 rounded-full">{{
+                            user_count }}</span>
+                    </a>
+                    <a href="{{ url_for('admin.categories') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all {{ 'bg-primary-50 text-primary-700' if request.endpoint in ['admin.categories', 'admin.new_category', 'admin.edit_category'] else 'text-slate-600 hover:bg-slate-50' }}">
+                        <i data-lucide="folder-tree" class="w-5 h-5"></i>
+                        Kategorien
+                        <span
+                            class="ml-auto text-xs {{ 'bg-primary-100 text-primary-700' if request.endpoint in ['admin.categories', 'admin.new_category', 'admin.edit_category'] else 'bg-slate-100' }} px-2 py-0.5 rounded-full">{{
+                            category_count }}</span>
+                    </a>
+                    <a href="{{ url_for('admin.inputs') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all {{ 'bg-primary-50 text-primary-700' if 'admin.inputs' in request.endpoint or 'admin.new_input' in request.endpoint or 'admin.edit_input' in request.endpoint else 'text-slate-600 hover:bg-slate-50' }}">
+                        <i data-lucide="inbox" class="w-5 h-5"></i>
+                        Eingangslayer
+                        <span
+                            class="ml-auto text-xs {{ 'bg-primary-100 text-primary-700' if 'admin.inputs' in request.endpoint else 'bg-slate-100' }} px-2 py-0.5 rounded-full">{{
+                            source_count }}</span>
+                    </a>
+                    <hr class="my-2 border-slate-200">
+                    <a href="{{ url_for('admin.settings') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all {{ 'bg-primary-50 text-primary-700' if request.endpoint == 'admin.settings' else 'text-slate-600 hover:bg-slate-50' }}">
+                        <i data-lucide="sliders" class="w-5 h-5"></i>
+                        Einstellungen
+                    </a>
+
+                    <a href="{{ url_for('admin.appearance') }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all {{ 'bg-primary-50 text-primary-700' if request.endpoint == 'admin.appearance' else 'text-slate-600 hover:bg-slate-50' }}">
+                        <i data-lucide="palette" class="w-5 h-5"></i>
+                        Erscheinungsbild
+                    </a>
+
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="lg:col-span-3 space-y-6">
+                {% block admin_content %}
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="glass rounded-2xl border border-white/20 shadow-sm p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="users" class="w-6 h-6 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-slate-800">{{ user_count }}</p>
+                                <p class="text-sm text-slate-500">Benutzer</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl border border-white/20 shadow-sm p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="folder-tree" class="w-6 h-6 text-purple-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-slate-800">{{ category_count }}</p>
+                                <p class="text-sm text-slate-500">Kategorien</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl border border-white/20 shadow-sm p-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i data-lucide="inbox" class="w-6 h-6 text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-slate-800">{{ source_count }}</p>
+                                <p class="text-sm text-slate-500">Eingangslayer</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="glass rounded-2xl border border-white/20 shadow-sm">
+                    <div class="p-6 border-b border-slate-100">
+                        <h2 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="activity" class="w-5 h-5 text-primary-600"></i>
+                            Letzte Aktivitäten
+                        </h2>
+                    </div>
+                    <div class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                        {% for log in recent_logs %}
+                        <div class="p-4 flex items-center gap-4">
+                            <div
+                                class="w-10 h-10 rounded-full flex items-center justify-center 
+                                {% if log.action == 'login' %}bg-green-100{% elif log.action == 'transfer' %}bg-blue-100{% elif log.action == 'reject' %}bg-red-100{% else %}bg-slate-100{% endif %}">
+                                <i data-lucide="{% if log.action == 'login' %}log-in{% elif log.action == 'transfer' %}send{% elif log.action == 'reject' %}x{% elif log.action == 'logout' %}log-out{% else %}activity{% endif %}"
+                                    class="w-5 h-5 {% if log.action == 'login' %}text-green-600{% elif log.action == 'transfer' %}text-blue-600{% elif log.action == 'reject' %}text-red-600{% else %}text-slate-600{% endif %}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-slate-800">
+                                    <span class="font-medium">{{ log.user.username if log.user else 'System' }}</span>
+                                    {% if log.action == 'login' %}hat sich angemeldet
+                                    {% elif log.action == 'logout' %}hat sich abgemeldet
+                                    {% elif log.action == 'transfer' %}hat ein Dokument übertragen
+                                    {% elif log.action == 'reject' %}hat ein Dokument verworfen
+                                    {% else %}{{ log.action }}
+                                    {% endif %}
+                                </p>
+                                <p class="text-xs text-slate-500">{{ log.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-slate-500">
+                            <p>Keine Aktivitäten vorhanden</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+</div>
+{% endblock %}

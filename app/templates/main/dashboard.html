@@ -1,0 +1,1281 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Dashboard - IFAS-Assistent{% endblock %}
+
+{% block head %}
+<style>
+    .source-badge {
+        transition: all 0.3s ease;
+    }
+
+    .source-badge:hover {
+        transform: translateY(-1px);
+    }
+
+    .source-docs {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .source-docs.expanded {
+        max-height: 3000px;
+    }
+
+    .doc-preview-modal {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn-action {
+        transition: all 0.15s ease;
+    }
+
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-action:active {
+        transform: scale(0.97);
+    }
+
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .badge-count {
+        min-width: 24px;
+        text-align: center;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .status-dot.online {
+        background: #22c55e;
+        box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+    }
+
+    .status-dot.offline {
+        background: #ef4444;
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+    }
+
+    .status-dot.unknown {
+        background: #94a3b8;
+    }
+
+    .accuracy-ring {
+        width: 32px;
+        height: 32px;
+        position: relative;
+    }
+
+    .accuracy-ring circle {
+        fill: none;
+        stroke-width: 3;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: center;
+    }
+
+    .progress-bar-fill {
+        transition: width 0.6s ease;
+    }
+
+    .toast {
+        animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+
+        to {
+            opacity: 0;
+        }
+    }
+
+    .auto-analyse-active {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
+        /* dark blue */
+        color: white !important;
+        box-shadow: 0 0 12px rgba(30, 58, 138, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen">
+    <!-- Top Navigation -->
+    <nav class="glass border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('main.dashboard') }}" class="block">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo"
+                            class="w-14 h-14 object-contain rounded-xl"
+                            onerror="this.onerror=null; this.parentNode.innerHTML='<div class=\'w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25\'><i data-lucide=\'file-check\' class=\'w-7 h-7 text-white\'></i></div>'">
+                    </a>
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-800">IFAS-Assistent</h1>
+                        <p class="text-xs text-slate-500">Command Center</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="flex items-center gap-2">
+                    <a href="{{ url_for('main.dashboard') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 text-primary-700 font-medium">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('main.validation') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+                        <i data-lucide="check-square" class="w-4 h-4"></i>
+                        Validierung
+                        <span id="global-validation-badge"
+                            class="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full {% if ready_count == 0 %}hidden{% endif %}">
+                            {{ ready_count }}
+                        </span>
+                    </a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.index') }}"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-all">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Admin
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- User Info & Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center gap-3 focus:outline-none">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-medium text-slate-700">{{ current_user.display_name or
+                                current_user.username }}</p>
+                            <p class="text-xs text-slate-400">{{ current_user.role | capitalize }}</p>
+                        </div>
+                        <div
+                            class="w-9 h-9 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary-500/20 group-hover:scale-105 transition-transform">
+                            {{ (current_user.display_name or current_user.username)[0] | upper }}
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu (Fixed hover gap) -->
+                    <div
+                        class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block transition-all z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div class="bg-white rounded-xl shadow-xl border border-slate-100 py-1">
+                            <div class="px-4 py-3 border-b border-slate-100 sm:hidden">
+                                <p class="text-sm font-medium text-slate-800">{{ current_user.display_name or
+                                    current_user.username }}</p>
+                                <p class="text-xs text-slate-400">{{ current_user.role | capitalize }}</p>
+                            </div>
+
+                            {% if current_user.is_admin %}
+                            <div class="px-2 py-1">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 px-2">Verwaltung</span>
+                                <a href="{{ url_for('admin.settings') }}"
+                                    class="block px-2 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="w-4 h-4 text-slate-400">
+                                        <path
+                                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    Einstellungen
+                                </a>
+                                <form action="{{ url_for('admin.reset_system') }}" method="POST"
+                                    onsubmit="return confirm('ACHTUNG: Möchten Sie wirklich das gesamte System zurücksetzen?\n\n- Alle Dokumente werden gelöscht\n- Alle Logs werden gelöscht\n- Kategorien bleiben erhalten\n\nDiese Aktion kann nicht rückgängig gemacht werden!');">
+                                    <button type="submit"
+                                        class="w-full text-left px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                                            <path d="M3 6h18" />
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                            <line x1="10" x2="10" y1="11" y2="17" />
+                                            <line x1="14" x2="14" y1="11" y2="17" />
+                                        </svg>
+                                        System zurücksetzen
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="h-px bg-slate-100 my-1"></div>
+                            {% endif %}
+
+                            <div class="px-2 py-1">
+                                <a href="{{ url_for('auth.logout') }}"
+                                    class="block px-2 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="w-4 h-4">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                        <polyline points="16 17 21 12 16 7" />
+                                        <line x1="21" x2="9" y1="12" y2="12" />
+                                    </svg>
+                                    Abmelden
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================================================================ -->
+        <!-- TOP ROW: STATS + KI STATUS                                      -->
+        <!-- ================================================================ -->
+        <div class="grid grid-cols-5 gap-4 mb-6">
+            <!-- Pending -->
+            <a href="{{ url_for('main.validation', status='pending') }}"
+                class="glass rounded-xl p-4 flex items-center gap-3 transition-transform hover:scale-[1.02] cursor-pointer block">
+                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="clock" class="w-6 h-6 text-amber-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-800" id="global-pending-count">{{ pending_count }}</p>
+                    <p class="text-xs text-slate-500">Ausstehend</p>
+                </div>
+            </a>
+            <!-- Ready -->
+            <a href="{{ url_for('main.validation', status='ready') }}"
+                class="glass rounded-xl p-4 flex items-center gap-3 transition-transform hover:scale-[1.02] cursor-pointer block">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="file-check" class="w-6 h-6 text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-800" id="global-ready-count">{{ ready_count }}</p>
+                    <p class="text-xs text-slate-500">Bereit</p>
+                </div>
+            </a>
+            <!-- Transferred -->
+            <a href="{{ url_for('main.validation', status='transferred') }}"
+                class="glass rounded-xl p-4 flex items-center gap-3 transition-transform hover:scale-[1.02] cursor-pointer block">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i data-lucide="send" class="w-6 h-6 text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-slate-800" id="global-transferred-count">{{ transferred_count }}
+                    </p>
+                    <p class="text-xs text-slate-500">Übertragen</p>
+                </div>
+            </a>
+            <!-- OCR Status -->
+            <a href="{{ url_for('admin.settings') }}#ocr-settings-section"
+                class="glass rounded-xl p-4 flex items-center gap-3 relative overflow-hidden transition-transform hover:scale-[1.02] cursor-pointer block">
+                <div
+                    class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center relative z-10 transition-colors group-hover:bg-purple-200">
+                    {% if ocr_strategy == 'vision' or ocr_strategy == 'hybrid' %}
+                    <i data-lucide="eye" class="w-6 h-6 text-purple-600"></i>
+                    {% else %}
+                    <i data-lucide="file-text" class="w-6 h-6 text-purple-600"></i>
+                    {% endif %}
+                </div>
+                <div class="relative z-10 flex-1 min-w-0">
+                    <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">OCR-Engine</p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-sm font-medium text-slate-800 truncate">
+                            {% if ocr_strategy == 'vision' %}
+                            KI Vision (LM Studio)
+                            {% elif ocr_strategy == 'hybrid' %}
+                            Hybrid (Text + Vision)
+                            {% elif ocr_strategy == 'tesseract' %}
+                            Tesseract (Lokal)
+                            {% else %}
+                            PyMuPDF (Textlayer)
+                            {% endif %}
+                        </p>
+                        <!-- Status dot for Vision/Hybrid -->
+                        {% if ocr_strategy == 'vision' or ocr_strategy == 'hybrid' %}
+                        <span class="status-dot unknown" id="ocr-status-dot" title="OCR Modell Status"></span>
+                        {% endif %}
+                    </div>
+
+                    {% if ocr_strategy != 'standard' and ocr_strategy != 'tesseract' and ocr_model %}
+                    <p class="text-xs text-slate-400 mt-0.5 truncate">
+                        {{ ocr_model }}
+                    </p>
+                    {% endif %}
+                </div>
+                <!-- Background decoration -->
+                <i data-lucide="scan-line"
+                    class="absolute -right-4 -bottom-4 w-24 h-24 text-purple-500/5 rotate-12 transition-transform group-hover:rotate-45"></i>
+            </a>
+
+            <!-- KI Status -->
+            <a href="{{ url_for('admin.settings') }}#ocr-settings-section"
+                class="glass rounded-xl p-4 transition-transform hover:scale-[1.02] cursor-pointer block"
+                id="ki-status-card">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center transition-colors group-hover:bg-violet-200">
+                        <i data-lucide="brain" class="w-6 h-6 text-violet-600"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <p class="text-xs text-slate-500 uppercase tracking-wider font-semibold">KI Modell</p>
+                            <span class="status-dot unknown" id="ki-status-dot"></span>
+                        </div>
+                        <p class="text-sm font-medium text-slate-800 truncate" id="ki-status-text"
+                            title="{{ main_model }}">
+                            {{ main_model if main_model else 'Nicht konfiguriert' }}
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- ================================================================ -->
+        <!-- COMMAND CENTER HEADER                                            -->
+        <!-- ================================================================ -->
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold text-slate-800">Command Center</h2>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleAnalyzeAll(this)"
+                    class="flex items-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-lg text-sm font-medium transition-all"
+                    id="btn-analyze-all" data-status="idle">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>Hintergrundanalyse (Alle) starten</span>
+                </button>
+                <button onclick="refreshAllSources()"
+                    class="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-all"
+                    id="btn-refresh-all">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Alle aktualisieren
+                </button>
+            </div>
+        </div>
+
+        <!-- ================================================================ -->
+        <!-- SOURCE BADGES GRID                                               -->
+        <!-- ================================================================ -->
+        <div class="grid grid-cols-1 gap-4 mb-6">
+            {% for sd in sources_data %}
+            <div class="source-badge glass rounded-xl p-5 border border-slate-100" id="badge-{{ sd.source.id }}">
+                <!-- Badge Header: Icon + Name + Toggle + Accuracy + Actions -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <!-- Source icon -->
+
+                        {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.edit_input', source_id=sd.source.id) }}"
+                            class="block hover:opacity-80 transition-opacity" title="Einstellungen bearbeiten">
+                            <div
+                                class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0
+                                {% if sd.source.source_type == 'folder' %}bg-blue-100{% elif sd.source.source_type == 'network' %}bg-indigo-100{% elif sd.source.source_type == 'imap' %}bg-rose-100{% else %}bg-slate-100{% endif %}">
+                                <i data-lucide="{% if sd.source.source_type == 'folder' %}folder{% elif sd.source.source_type == 'network' %}hard-drive{% elif sd.source.source_type == 'imap' %}mail{% else %}database{% endif %}"
+                                    class="w-5 h-5 {% if sd.source.source_type == 'folder' %}text-blue-600{% elif sd.source.source_type == 'network' %}text-indigo-600{% elif sd.source.source_type == 'imap' %}text-rose-600{% else %}text-slate-600{% endif %}"></i>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div
+                            class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0
+                            {% if sd.source.source_type == 'folder' %}bg-blue-100{% elif sd.source.source_type == 'network' %}bg-indigo-100{% elif sd.source.source_type == 'imap' %}bg-rose-100{% else %}bg-slate-100{% endif %}">
+                            <i data-lucide="{% if sd.source.source_type == 'folder' %}folder{% elif sd.source.source_type == 'network' %}hard-drive{% elif sd.source.source_type == 'imap' %}mail{% else %}database{% endif %}"
+                                class="w-5 h-5 {% if sd.source.source_type == 'folder' %}text-blue-600{% elif sd.source.source_type == 'network' %}text-indigo-600{% elif sd.source.source_type == 'imap' %}text-rose-600{% else %}text-slate-600{% endif %}"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <div class="flex items-center gap-3">
+                                {% if current_user.is_admin %}
+                                <a href="{{ url_for('admin.edit_input', source_id=sd.source.id) }}"
+                                    class="font-semibold text-slate-800 hover:text-primary-600 transition-colors"
+                                    title="Einstellungen bearbeiten">
+                                    {{ sd.source.name }}
+                                </a>
+                                {% else %}
+                                <h3 class="font-semibold text-slate-800">{{ sd.source.name }}</h3>
+                                {% endif %}
+
+                                <!-- Toggle Switch -->
+                                <button onclick="toggleSource(this)" data-source-id="{{ sd.source.id }}"
+                                    class="relative inline-flex items-center h-5 rounded-full w-9 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 {% if sd.source.is_active %}bg-green-500{% else %}bg-slate-200{% endif %}"
+                                    title="{% if sd.source.is_active %}Deaktivieren{% else %}Aktivieren{% endif %}"
+                                    id="toggle-btn-{{ sd.source.id }}">
+                                    <span class="sr-only">Status umschalten</span>
+                                    <span
+                                        class="inline-block w-3 h-3 transform bg-white rounded-full transition-transform {{ 'translate-x-5' if sd.source.is_active else 'translate-x-1' }}"></span>
+                                </button>
+
+                                <!-- Accuracy Ring (Small) -->
+                                <div class="flex items-center gap-2 ml-2"
+                                    title="Genauigkeit: {{ sd.accuracy }}% ({{ sd.analyzed_count }} analysiert)">
+                                    <div class="accuracy-ring text-xs text-slate-400"
+                                        style="width: 24px; height: 24px;">
+                                        <svg viewBox="0 0 48 48" class="w-full h-full">
+                                            <circle cx="24" cy="24" r="20" stroke="#e2e8f0" stroke-width="6" />
+                                            {% if sd.accuracy is not none %}
+                                            <circle cx="24" cy="24" r="20"
+                                                stroke="{% if sd.accuracy >= 80 %}#22c55e{% elif sd.accuracy >= 50 %}#f59e0b{% else %}#ef4444{% endif %}"
+                                                stroke-width="6"
+                                                stroke-dasharray="{{ (sd.accuracy / 100 * 125.6)|round(1) }} 125.6" />
+                                            {% else %}
+                                            <circle cx="24" cy="24" r="20" stroke="#cbd5e1" stroke-width="6"
+                                                stroke-dasharray="0 125.6" />
+                                            {% endif %}
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-semibold text-slate-600">
+                                        {% if sd.accuracy is not none %}{{ sd.accuracy }}%{% else %}–{% endif %}
+                                    </span>
+                                </div>
+
+                                <!-- Connection status dot (checked via JS) -->
+                                <span class="status-dot unknown ml-1" id="conn-{{ sd.source.id }}"
+                                    title="Verbindung wird geprüft..."></span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <p class="text-xs text-slate-400">{{ sd.source.source_type | upper }} • {{ sd.total
+                                    }}
+                                    Dokumente</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Quick Action Buttons -->
+                    <div class="flex items-center gap-1">
+                        <button onclick="pollSource(this)" data-source-id="{{ sd.source.id }}"
+                            class="btn-action p-2 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50"
+                            title="Neue Dokumente abrufen">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="w-4 h-4">
+                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                                <path d="M21 3v5h-5" />
+                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                                <path d="M8 16H3v5" />
+                            </svg>
+                        </button>
+                        <!-- Auto-Analyse Toggle -->
+                        <button onclick="toggleAutoAnalyse(this)" data-source-id="{{ sd.source.id }}"
+                            class="btn-action p-2 rounded-lg text-slate-500 hover:text-blue-900 hover:bg-blue-50"
+                            title="Auto-Analyse ein/ausschalten" id="auto-analyse-btn-{{ sd.source.id }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="w-4 h-4">
+                                <path
+                                    d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                                <path d="M5 3v4" />
+                                <path d="M9 3v4" />
+                                <path d="M5 3h4" />
+                                <path d="M5 7h4" />
+                            </svg>
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- Global Progress Bar (hidden by default) -->
+                <div class="hidden mb-3 p-2 bg-blue-50 rounded-lg" id="progress-container-{{ sd.source.id }}">
+                    <div class="flex items-center justify-between text-xs text-blue-900 mb-1">
+                        <span id="progress-text-{{ sd.source.id }}">Verarbeitung läuft...</span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-1.5">
+                        <div class="bg-blue-800 h-1.5 rounded-full progress-bar-fill" style="width: 0%"
+                            id="progress-bar-{{ sd.source.id }}"></div>
+                    </div>
+                </div>
+
+                <!-- Status Counts + Analytics Row (Consolidated) -->
+                <div class="flex flex-wrap items-center gap-3 mb-3 text-xs">
+                    <!-- Status Counts -->
+                    <div class="flex items-center gap-2">
+                        <!-- PENDING -->
+                        <span id="badge-container-{{ sd.source.id }}-pending"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 {% if sd.pending == 0 %}hidden{% endif %}">
+                            <i data-lucide="clock" class="w-3 h-3"></i>
+                            <span id="badge-count-{{ sd.source.id }}-pending">{{ sd.pending }}</span>
+                        </span>
+
+                        <!-- READY -->
+                        <span id="badge-container-{{ sd.source.id }}-ready"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 {% if sd.ready == 0 %}hidden{% endif %}">
+                            <i data-lucide="file-check" class="w-3 h-3"></i>
+                            <span id="badge-count-{{ sd.source.id }}-ready">{{ sd.ready }}</span>
+                        </span>
+
+                        <!-- TRANSFERRED -->
+                        <span id="badge-container-{{ sd.source.id }}-transferred"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 {% if sd.transferred == 0 %}hidden{% endif %}">
+                            <i data-lucide="check-circle" class="w-3 h-3"></i>
+                            <span id="badge-count-{{ sd.source.id }}-transferred">{{ sd.transferred }}</span>
+                        </span>
+
+                        <!-- EMPTY STATE -->
+                        <span id="badge-count-{{ sd.source.id }}-empty"
+                            class="text-slate-400 {% if sd.total > 0 %}hidden{% endif %}">Keine Dokumente</span>
+                    </div>
+
+                    <div class="h-4 w-px bg-slate-200 mx-1"></div>
+
+                    <!-- Avg Processing Time -->
+                    <div class="flex items-center gap-1 text-slate-500" title="Durchschnittliche Verarbeitungszeit">
+                        <i data-lucide="timer" class="w-3 h-3"></i>
+                        <span>
+                            {% if sd.avg_time_seconds is not none %}
+                            {% if sd.avg_time_seconds < 60 %}{{ sd.avg_time_seconds|round(0)|int }}s {% elif
+                                sd.avg_time_seconds < 3600 %}{{ (sd.avg_time_seconds / 60)|round(1) }}m {% else %}{{
+                                (sd.avg_time_seconds / 3600)|round(1) }}h{% endif %} {% else %}–{% endif %} <span
+                                class="hidden sm:inline ml-1 text-[10px] text-slate-400">Durchschnittliche
+                                Verarbeitungszeit</span>
+                        </span>
+                    </div>
+
+                    <!-- Category Changes -->
+                    {% if sd.category_changes > 0 %}
+                    <div class="flex items-center gap-1 text-orange-600" title="Kategorie-Korrekturen erforderlich">
+                        <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                        <span>{{ sd.category_changes }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Expand/Collapse + Filters Row -->
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleExpand(this)" data-source-id="{{ sd.source.id }}"
+                        class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition-all"
+                        id="expand-btn-{{ sd.source.id }}" data-expanded="false">
+                        <svg class="w-3.5 h-3.5 transition-transform" id="expand-icon-{{ sd.source.id }}"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                        Dokumente anzeigen
+                    </button>
+                    <select onchange="filterSourceDocs(this)" data-source-id="{{ sd.source.id }}"
+                        class="text-xs py-1.5 px-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                        id="filter-status-{{ sd.source.id }}">
+                        <option value="">Alle Status</option>
+                        <option value="pending">Offen</option>
+                        <option value="ready">Bereit</option>
+                        <option value="transferred">Übertragen</option>
+                        <option value="rejected">Verworfen</option>
+                        <option value="failed">Fehlgeschlagen</option>
+                    </select>
+                    <select onchange="filterSourceDocs(this)" data-source-id="{{ sd.source.id }}"
+                        class="text-xs py-1.5 px-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                        id="filter-cat-{{ sd.source.id }}">
+                        <option value="">Alle Kategorien</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.display_name or cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Expandable Document List -->
+                <div class="source-docs mt-3" id="docs-{{ sd.source.id }}">
+                    <div class="border-t border-slate-100 pt-3">
+                        <div id="docs-list-{{ sd.source.id }}">
+                            <div class="p-4 text-center text-slate-400 text-sm">
+                                <i data-lucide="loader" class="w-5 h-5 mx-auto mb-2 opacity-50 spin"></i>
+                                Lade Dokumente...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="col-span-2 glass rounded-xl p-8 text-center">
+                <i data-lucide="inbox" class="w-12 h-12 mx-auto text-slate-300 mb-3"></i>
+                <h3 class="font-semibold text-slate-600 mb-1">Keine Eingangslayer</h3>
+                <p class="text-slate-500 mb-4">Richten Sie Eingangslayer ein, um Dokumente zu empfangen.</p>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.inputs') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Eingangslayer einrichten
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+
+<!-- Document Preview Modal -->
+<div id="preview-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-slate-100">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
+                    <i data-lucide="file-text" class="w-5 h-5 text-primary-600"></i>
+                </div>
+                <div class="min-w-0">
+                    <h3 class="font-semibold text-slate-800 truncate" id="preview-title">Dokument</h3>
+                    <p class="text-xs text-slate-500" id="preview-meta"></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="#" id="preview-validate-link"
+                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium flex items-center gap-2 transition-all">
+                    <i data-lucide="check-square" class="w-4 h-4"></i>
+                    Zur Validierung
+                </a>
+                <button onclick="closePreview()"
+                    class="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Modal Body -->
+        <div class="flex-1 overflow-auto p-6 bg-slate-50" id="preview-body">
+            <div class="text-center text-slate-400 py-12">
+                <div class="spinner mx-auto mb-3"></div>
+                Lade Vorschau...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ============================================================================
+    // STATE
+    // ============================================================================
+    let pollInterval = null;
+    const POLLING_INTERVAL = 3000; // 3 seconds
+    let lastSourceStates = {}; // Track state to detect changes
+
+    // ============================================================================
+    // INIT
+    // ============================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        checkKIStatus();
+        checkAllConnections();
+        startDashboardPolling();
+
+        // Restore expanded states
+        document.querySelectorAll('[id^=expand-btn-]').forEach(btn => {
+            const sourceId = btn.id.replace('expand-btn-', '');
+            // If we want to restore expansion, we could check localStorage here
+        });
+    });
+
+    // ============================================================================
+    // POLLING & STATS
+    // ============================================================================
+    // ============================================================================
+    // POLLING & STATS
+    // ============================================================================
+    function startDashboardPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+
+        pollInterval = setInterval(async () => {
+            if (document.hidden) return;
+            pollDashboard();
+        }, 1000); // 1 second for faster updates (was 3000)
+    }
+
+    async function pollDashboard() {
+        try {
+            const res = await fetch('/api/stats');
+            if (!res.ok) return;
+            const data = await res.json();
+            updateDashboardUI(data);
+        } catch (e) {
+            console.error("Poll error:", e);
+        }
+    }
+
+    // Store progress state for smooth animation
+    const progressState = {};
+
+    function updateDashboardUI(data) {
+        // 1. Update Global Stats
+        const pEl = document.getElementById('global-pending-count');
+        const rEl = document.getElementById('global-ready-count');
+        const tEl = document.getElementById('global-transferred-count');
+        const vBadge = document.getElementById('global-validation-badge');
+
+        if (pEl) pEl.textContent = data.global.pending;
+        if (rEl) rEl.textContent = data.global.ready;
+        if (tEl) tEl.textContent = data.global.transferred;
+
+        // Update Validation Badge in Header
+        if (vBadge) {
+            vBadge.textContent = data.global.ready;
+            if (data.global.ready > 0) {
+                vBadge.classList.remove('hidden');
+            } else {
+                vBadge.classList.add('hidden');
+            }
+        }
+
+        // Update per-source stats
+        if (data.sources) {
+            data.sources.forEach(source => {
+                const sId = source.id;
+
+                // Sync Badges (Immediate)
+                const pendingCount = document.getElementById(`badge-count-${sId}-pending`);
+                const readyCount = document.getElementById(`badge-count-${sId}-ready`);
+                const transferredCount = document.getElementById(`badge-count-${sId}-transferred`); // Was missing in previous JS?
+
+                const pendingContainer = document.getElementById(`badge-container-${sId}-pending`);
+                const readyContainer = document.getElementById(`badge-container-${sId}-ready`);
+                const transferredContainer = document.getElementById(`badge-container-${sId}-transferred`);
+                const emptyBadge = document.getElementById(`badge-count-${sId}-empty`);
+
+                if (pendingCount) pendingCount.textContent = source.pending;
+                if (readyCount) readyCount.textContent = source.ready;
+                if (transferredCount) transferredCount.textContent = source.transferred;
+
+                // Toggle visibility
+                if (pendingContainer) {
+                    if (source.pending > 0) pendingContainer.classList.remove('hidden');
+                    else pendingContainer.classList.add('hidden');
+                }
+                if (readyContainer) {
+                    if (source.ready > 0) readyContainer.classList.remove('hidden');
+                    else readyContainer.classList.add('hidden');
+                }
+                if (transferredContainer) {
+                    if (source.transferred > 0) transferredContainer.classList.remove('hidden');
+                    else transferredContainer.classList.add('hidden');
+                }
+
+                // Toggle "Keine Dokumente"
+                if (emptyBadge) {
+                    const total = source.pending + source.ready + source.transferred + source.analyzing_count;
+                    if (total === 0) emptyBadge.classList.remove('hidden');
+                    else emptyBadge.classList.add('hidden');
+                }
+
+                // CHECK GLOBAL BUSY STATE
+                // Convert object values to array to check if ANY other source is analyzing
+                const otherSources = Object.values(lastSourceStates).filter(s => s.id !== sId);
+                const isAnyOtherAnalyzing = otherSources.some(s => s.analyzing_count > 0);
+
+
+
+                // PROGRESS BAR LOGIC (Global Batch)
+                const progressContainer = document.getElementById(`progress-container-${sId}`);
+                const progressBar = document.getElementById(`progress-bar-${sId}`);
+                const progressText = document.getElementById(`progress-text-${sId}`);
+
+                // Determine if we should show progress:
+                // 1. Is analyzing currently?
+                // 2. OR was analyzing recently AND there are still pending items (batch continuation) AND Auto-Analyze is ON
+                const isAnalyzing = source.analyzing_count > 0;
+                const wasActive = progressState[sId] && progressState[sId].active;
+                const hasPending = source.pending > 0;
+
+                // CRITICAL CHANGE: Only show progress for pending items if auto-analyze is actually enabled.
+                // Otherwise we are just in a "paused" state and shouldn't show a progress bar.
+                if (isAnalyzing || (wasActive && hasPending && source.auto_analyze)) {
+                    // Initialize state if new
+                    if (!progressState[sId] || !progressState[sId].active) {
+                        progressState[sId] = {
+                            active: true,
+                            startTime: Date.now(),
+                            totalBatch: source.pending + source.analyzing_count + source.ready, // Authenticated guess of batch size
+                            processedInBatch: source.ready, // Start from what's already done
+                            estimatedTimePerItem: (source.avg_time_seconds || 5) * 1000
+                        };
+                        if (progressContainer) progressContainer.classList.remove('hidden');
+                    }
+
+                    // Update state
+                    const state = progressState[sId];
+                    const currentProcessed = source.ready; // Use 'ready' count as proxy for done in this batch context
+
+                    // Reset if batch seems to have grown (user added more files)
+                    const currentTotal = source.pending + source.analyzing_count + source.ready;
+                    if (currentTotal > state.totalBatch) {
+                        state.totalBatch = currentTotal;
+                    }
+
+                    // Interpolation
+                    const baseProgress = (currentProcessed / state.totalBatch);
+                    const itemProgress = (Date.now() - state.startTime) / state.estimatedTimePerItem; // 0.0 to 1.0 for current item
+                    const effectiveItemProgress = Math.min(itemProgress, 0.95);
+
+                    let totalPct = 0;
+                    if (state.totalBatch > 0) {
+                        totalPct = ((currentProcessed + effectiveItemProgress) / state.totalBatch) * 100;
+                    }
+
+                    totalPct = Math.min(totalPct, 95);
+
+                    if (progressBar) {
+                        progressBar.style.width = `${totalPct}%`;
+                        progressBar.style.transition = 'width 1s linear';
+                        progressBar.classList.remove('animate-pulse', 'bg-slate-200'); // Ensure normal style
+                        progressBar.classList.add('bg-blue-600');
+                    }
+                    if (progressText) {
+                        progressText.textContent = `Verarbeite Dokument ${currentProcessed + 1} von ${state.totalBatch}...`;
+                    }
+
+                    // Reset start time if we moved to next item (heuristic)
+                    if (currentProcessed > state.processedInBatch) {
+                        state.processedInBatch = currentProcessed;
+                        state.startTime = Date.now(); // Reset timer for next item
+                    }
+                } else if (hasPending && isAnyOtherAnalyzing) {
+                    // WAITING STATE: Source has pending items but another source is busy
+                    if (progressContainer) progressContainer.classList.remove('hidden');
+
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                        progressBar.style.transition = 'none';
+                        progressBar.classList.remove('bg-blue-600');
+                        progressBar.classList.add('bg-slate-200', 'animate-pulse'); // Subtle waiting effect
+                    }
+                    if (progressText) {
+                        progressText.textContent = 'Warte auf Verarbeitung...';
+                    }
+
+                    // Reset active state so it restarts properly when it becomes active
+                    if (progressState[sId]) progressState[sId].active = false;
+
+                } else {
+                    // No analysis running and no pending items left in batch
+                    if (progressState[sId] && progressState[sId].active) {
+                        progressState[sId].active = false;
+                        if (progressBar) progressBar.style.width = '100%';
+                        if (progressText) progressText.textContent = 'Verarbeitung abgeschlossen';
+
+                        setTimeout(() => {
+                            if (progressContainer) progressContainer.classList.add('hidden');
+                            if (progressBar) progressBar.style.width = '0%';
+                        }, 3000);
+                    } else if (progressContainer && !progressContainer.classList.contains('hidden')) {
+                        // Safety: Ensure it's hidden if not active
+                        // But give it a grace period in case of polling gaps? No, 'wasActive' handles valid batch gaps.
+                        progressContainer.classList.add('hidden');
+                    }
+                }
+
+                // Auto-Analyze Button State
+                const aaBtn = document.getElementById(`auto-analyse-btn-${sId}`);
+                if (aaBtn) {
+                    if (source.auto_analyze) {
+                        aaBtn.classList.add('auto-analyse-active', 'text-white');
+                        aaBtn.classList.remove('text-slate-500', 'hover:text-blue-900', 'hover:bg-slate-100');
+                    } else {
+                        aaBtn.classList.remove('auto-analyse-active', 'text-white');
+                        aaBtn.classList.add('text-slate-500', 'hover:text-blue-900', 'hover:bg-slate-100');
+                    }
+                }
+
+                // Main Source Toggle Button State
+                const toggleBtn = document.getElementById(`toggle-btn-${sId}`);
+                if (toggleBtn) {
+                    const toggleSpan = toggleBtn.querySelector('span:not(.sr-only)');
+                    if (source.is_active) {
+                        toggleBtn.classList.remove('bg-slate-200');
+                        toggleBtn.classList.add('bg-green-500');
+                        toggleBtn.title = 'Deaktivieren';
+                        if (toggleSpan) {
+                            toggleSpan.classList.remove('translate-x-1');
+                            toggleSpan.classList.add('translate-x-5');
+                        }
+                    } else {
+                        toggleBtn.classList.remove('bg-green-500');
+                        toggleBtn.classList.add('bg-slate-200');
+                        toggleBtn.title = 'Aktivieren';
+                        if (toggleSpan) {
+                            toggleSpan.classList.remove('translate-x-5');
+                            toggleSpan.classList.add('translate-x-1');
+                        }
+                    }
+                }
+
+                // Update state cache
+                lastSourceStates[sId] = source;
+            });
+        }
+    }
+
+    // ============================================================================
+    // ACTIONS
+    // ============================================================================
+
+    async function toggleAutoAnalyse(btn) {
+        if (btn.disabled) return;
+        const sourceId = btn.dataset.sourceId;
+
+        const isEnabled = btn.classList.contains('auto-analyse-active');
+        const newState = !isEnabled;
+
+        btn.disabled = true;
+        const icon = btn.querySelector('svg');
+        if (icon) icon.classList.add('animate-spin');
+
+        try {
+            const res = await fetch(`/api/sources/${sourceId}/auto-analyze`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: newState })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                if (data.auto_analyze) {
+                    btn.classList.add('auto-analyse-active', 'text-white');
+                    btn.classList.remove('text-slate-500');
+                } else {
+                    btn.classList.remove('auto-analyse-active', 'text-white');
+                    btn.classList.add('text-slate-500');
+                }
+            } else {
+                showToast('Fehler: ' + data.error, 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Verbindungsfehler', 'error');
+        } finally {
+            btn.disabled = false;
+            if (icon) icon.classList.remove('animate-spin');
+        }
+    }
+
+    async function toggleAnalyzeAll(btn) {
+        if (btn.disabled) return;
+        btn.disabled = true;
+
+        const icon = btn.querySelector('i') || btn.querySelector('svg');
+        const textSpan = btn.querySelector('span');
+
+        if (icon) icon.classList.add('spin');
+
+        try {
+            const res = await fetch('/api/documents/analyze-all', { method: 'POST' });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('Hintergrund-Analyse gestartet', 'success');
+                btn.dataset.status = 'running';
+                if (textSpan) textSpan.textContent = 'Hintergrundanalyse läuft...';
+                btn.classList.add('bg-blue-100', 'text-blue-900'); // Changed from purple
+
+                // Wait a bit then reset button state (logic handles actual status via polling)
+                setTimeout(() => {
+                    btn.dataset.status = 'idle';
+                    if (textSpan) textSpan.textContent = 'Hintergrundanalyse (Alle) starten';
+                    if (icon) icon.classList.remove('spin');
+                    btn.classList.remove('bg-blue-100', 'text-blue-900');
+                    btn.disabled = false;
+                }, 3000);
+            } else {
+                showToast('Fehler: ' + data.error, 'error');
+                btn.disabled = false;
+                if (icon) icon.classList.remove('spin');
+            }
+        } catch (e) {
+            showToast('Verbindungsfehler', 'error');
+            btn.disabled = false;
+            if (icon) icon.classList.remove('spin');
+        }
+    }
+
+    // Toggle Expand without destroying icons
+    async function toggleExpand(arg) {
+        let sourceId = arg;
+        if (arg instanceof Element) {
+            sourceId = arg.dataset.sourceId;
+        }
+
+        const docs = document.getElementById(`docs-${sourceId}`);
+        const btn = document.getElementById(`expand-btn-${sourceId}`);
+        const icon = document.getElementById(`expand-icon-${sourceId}`);
+
+        if (!docs || !btn) return;
+
+        const isExpanded = btn.dataset.expanded === "true";
+        const newExpanded = !isExpanded;
+
+        btn.dataset.expanded = newExpanded;
+
+        // Toggle UI
+        if (newExpanded) {
+            docs.classList.add('expanded');
+            docs.style.maxHeight = '2000px';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+
+            const textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3 && n.textContent.trim().length > 0);
+            if (textNode) textNode.textContent = ' Einklappen';
+
+            // Always load on expand to ensure freshness
+            filterSourceDocs(sourceId);
+        } else {
+            docs.classList.remove('expanded');
+            docs.style.maxHeight = '0px';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+
+            const textNode = Array.from(btn.childNodes).find(n => n.nodeType === 3 && n.textContent.trim().length > 0);
+            if (textNode) textNode.textContent = ' Dokumente anzeigen';
+        }
+    }
+
+    // ============================================================================
+    // STANDARD FUNCTIONS
+    // ============================================================================
+
+    async function checkKIStatus() {
+        try {
+            const res = await fetch('/api/llm/status');
+            const data = await res.json();
+            const dot = document.getElementById('ki-status-dot');
+            const ocrDot = document.getElementById('ocr-status-dot');
+            // const text = document.getElementById('ki-status-text'); // Don't overwrite configured name
+
+            if (data.connected) {
+                dot.className = 'status-dot online';
+                if (ocrDot) ocrDot.className = 'status-dot online';
+            } else {
+                dot.className = 'status-dot offline';
+                if (ocrDot) ocrDot.className = 'status-dot offline';
+            }
+        } catch {
+            const dot = document.getElementById('ki-status-dot');
+            const ocrDot = document.getElementById('ocr-status-dot');
+            if (dot) dot.className = 'status-dot offline';
+            if (ocrDot) ocrDot.className = 'status-dot offline';
+            const text = document.getElementById('ki-status-text');
+            if (text) text.textContent = 'Fehler';
+        }
+    }
+
+    async function checkAllConnections() {
+        const badges = document.querySelectorAll('[id^="conn-"]');
+        for (const dot of badges) {
+            const sourceId = dot.id.replace('conn-', '');
+            try {
+                const res = await fetch(`/api/sources/${sourceId}/check`);
+                const data = await res.json();
+                if (data.reachable) {
+                    dot.className = 'status-dot online';
+                    dot.title = data.info || (data.path ? `Verbunden (${data.files} Dateien)` : 'Verbunden');
+                } else {
+                    dot.className = 'status-dot offline';
+                    dot.title = data.error || 'Nicht erreichbar';
+                }
+            } catch {
+                dot.className = 'status-dot offline';
+                dot.title = 'Prüfung fehlgeschlagen';
+            }
+        }
+    }
+
+    async function filterSourceDocs(arg) {
+        let sourceId = arg;
+        if (arg instanceof Element) {
+            sourceId = arg.dataset.sourceId;
+        }
+
+        const statusFilter = document.getElementById(`filter-status-${sourceId}`)?.value || '';
+        const catFilter = document.getElementById(`filter-cat-${sourceId}`)?.value || '';
+        const listEl = document.getElementById(`docs-list-${sourceId}`);
+
+        let url = `/api/documents?source_id=${sourceId}&limit=20`;
+        if (statusFilter) url += `&status=${statusFilter}`;
+        if (catFilter) url += `&category_id=${catFilter}`;
+
+        try {
+            const res = await fetch(url);
+            const docs = await res.json();
+
+            if (docs.length === 0) {
+                listEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm">Keine Dokumente</div>`;
+                return;
+            }
+
+            let html = '<div class="space-y-1">';
+            for (const doc of docs) {
+                const statusLabels = { pending: 'Offen', ready: 'Bereit', transferred: 'Übertragen', rejected: 'Verworfen', failed: 'Fehlgeschlagen', analyzing: 'Analysiere...' };
+                // Updated colors to match blue theme instead of purple
+                const statusColors = {
+                    pending: 'bg-amber-100 text-amber-700',
+                    ready: 'bg-blue-100 text-blue-700',
+                    transferred: 'bg-green-100 text-green-700',
+                    rejected: 'bg-red-100 text-red-700',
+                    failed: 'bg-red-200 text-red-800 border border-red-300',
+                    analyzing: 'bg-indigo-100 text-indigo-700' // Darker blue/indigo
+                };
+
+                html += `
+                    <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-200"
+                         onclick="showPreview(${doc.id})">
+                        <div class="flex items-center gap-3 min-w-0">
+                             <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                                <i data-lucide="file" class="w-4 h-4 text-slate-500"></i>
+                             </div>
+                             <div class="min-w-0">
+                                <p class="text-sm font-medium text-slate-700 truncate">${doc.filename}</p>
+                                <p class="text-xs text-slate-400 truncate">${doc.received_at ? new Date(doc.received_at).toLocaleString() : ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs px-2 py-0.5 rounded-full ${statusColors[doc.status] || ''}">${statusLabels[doc.status] || doc.status}</span>
+                        </div>
+                    </div>`;
+            }
+            html += '</div>';
+            listEl.innerHTML = html;
+
+            // Safe lucide call
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        } catch (err) {
+            listEl.innerHTML = `<div class="p-4 text-center text-red-400 text-sm">Fehler: ${err.message}</div>`;
+        }
+    }
+
+    // ============================================================================
+    // DOCUMENT PREVIEW MODAL
+    // ============================================================================
+    async function showPreview(docId) {
+        const modal = document.getElementById('preview-modal');
+        modal.classList.remove('hidden');
+
+        try {
+            const res = await fetch(`/api/documents/${docId}`);
+            const doc = await res.json();
+
+            document.getElementById('preview-title').textContent = doc.filename;
+            document.getElementById('preview-meta').textContent =
+                `${doc.source_name || ''} • ${doc.status} • ${doc.received_at ? new Date(doc.received_at).toLocaleString('de-DE') : ''}`;
+            document.getElementById('preview-validate-link').href = `/validation?doc=${docId}`;
+
+            const body = document.getElementById('preview-body');
+            let contentHtml = '';
+
+            // 1. Main Content (PDF or Text)
+            if (doc.mime_type === 'application/pdf' && doc.stored_path) {
+                contentHtml += `<iframe src="/api/documents/${docId}/file" class="w-full h-[60vh] rounded-lg border border-slate-200 mb-6"></iframe>`;
+            } else if (doc.raw_text) {
+                contentHtml += `<div class="whitespace-pre-wrap text-sm text-slate-700 font-mono bg-white rounded-lg p-4 border border-slate-200 max-h-[50vh] overflow-auto mb-6">${doc.raw_text}</div>`;
+            } else {
+                contentHtml += `<div class="text-center text-slate-400 py-8 mb-6">Keine Vorschau verfügbar</div>`;
+            }
+
+            // 2. Attachments
+            if (doc.attachments && doc.attachments.length > 0) {
+                contentHtml += `
+                    <div class="border-t border-slate-100 pt-4">
+                        <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Anhänge (${doc.attachments.length})</h4>
+                        <div class="grid grid-cols-1 gap-3">
+                `;
+
+                for (const att of doc.attachments) {
+                    const isPdf = att.mime_type === 'application/pdf' || att.filename.toLowerCase().endsWith('.pdf');
+                    // For now, link to a download/view route. 
+                    // We assume a route /api/documents/{docId}/attachments/{attId} exists or we use a generic file server.
+                    // Actually, we need a route to serve attachments. Let's assume /api/attachments/{id}/file
+
+                    contentHtml += `
+                        <div class="flex flex-col bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+                            <div class="px-3 py-2 border-b border-slate-200 flex items-center justify-between bg-slate-100">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <i data-lucide="${isPdf ? 'file-text' : 'paperclip'}" class="w-4 h-4 text-slate-500"></i>
+                                    <span class="text-sm font-medium text-slate-700 truncate">${att.filename}</span>
+                                </div>
+                                <a href="/api/attachments/${att.id}/file" target="_blank" class="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                                    Öffnen
+                                </a>
+                            </div>
+                            ${isPdf ? `<iframe src="/api/attachments/${att.id}/file" class="w-full h-[500px] border-none bg-white"></iframe>` : ''}
+                        </div>
+                    `;
+                }
+                contentHtml += '</div></div>';
+            }
+
+            body.innerHTML = contentHtml;
+
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        } catch (err) {
+            document.getElementById('preview-body').innerHTML =
+                `<div class="text-center text-red-400 py-12">Fehler: ${err.message}</div>`;
+        }
+    }
+
+    function closePreview() {
+        document.getElementById('preview-modal').classList.add('hidden');
+    }
+
+    async function toggleSource(btn) {
+        if (!btn) return;
+        const sourceId = btn.dataset.sourceId;
+        try {
+            const res = await fetch(`/api/sources/${sourceId}/toggle`, { method: 'PATCH' });
+            const data = await res.json();
+            showToast(data.message, 'success');
+            pollDashboard(); // Immediate update
+        } catch (e) { showToast('Fehler', 'error'); }
+    }
+
+    async function pollSource(btn) {
+        if (!btn) return;
+        const sourceId = btn.dataset.sourceId;
+        try {
+            const res = await fetch(`/api/sources/${sourceId}/poll`, { method: 'POST' });
+            const data = await res.json();
+            showToast(data.message, 'success');
+            pollDashboard(); // Immediate update
+        } catch (e) { showToast('Fehler', 'error'); }
+    }
+
+    async function refreshAllSources() {
+        location.reload();
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
+        const toast = document.createElement('div');
+        toast.className = `toast px-4 py-2.5 rounded-lg text-white text-sm font-medium shadow-lg ${colors[type] || colors.info}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closePreview();
+    });
+</script>
+{% endblock %}
